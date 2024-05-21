@@ -1,0 +1,10 @@
+version: "3.4"
+
+services:
+  api_gateway:
+    image: api_gateway
+    build:
+      context: ./api_gateway
+      dockerfile: ./Dockerfile
+    ports:
+      - 9000:9000

@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
+)
 
 func main() {
-	fmt.Println("hello world")
+	logger := logging.NewLogger()
+	logger.Println("logger initialized")
 }
