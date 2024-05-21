@@ -1,8 +1,9 @@
-version: "3.4"
-
 services:
   api_gateway:
     image: api_gateway
+    volumes:
+      - ./api_gateway/logs:/logs
+    user: root
     build:
       context: ./api_gateway
       dockerfile: ./Dockerfile

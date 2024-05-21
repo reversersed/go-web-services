@@ -37,7 +37,7 @@ type Logger struct {
 	*logrus.Entry
 }
 
-func NewLogger() *Logger {
+func GetLogger() *Logger {
 	return &Logger{e}
 }
 
@@ -65,13 +65,29 @@ func init() {
 	logFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
+	}	
+	errorLogFile, err := os.OpenFile("logs/errors.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		panic(fmt.Sprintf("[Message]: %s", err))
+	}
+	warnLogFile, err := os.OpenFile("logs/warnings.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	if err != nil {
+		panic(fmt.Sprintf("[Message]: %s", err))
 	}
 	l.SetOutput(io.Discard)
 
 	l.AddHook(&Hook {
-			Writer: []io.Writer{logFile, os.Stdout}, 
-			LogLevels: logrus.AllLevels,
-		})
+		Writer: []io.Writer{logFile, os.Stdout}, 
+		LogLevels: []logrus.Level{logrus.DebugLevel, logrus.InfoLevel, logrus.TraceLevel},
+	})
+	l.AddHook(&Hook {
+		Writer: []io.Writer{errorLogFile, os.Stdout}, 
+		LogLevels: []logrus.Level{logrus.ErrorLevel, logrus.FatalLevel},
+	})
+	l.AddHook(&Hook {
+		Writer: []io.Writer{warnLogFile, os.Stdout}, 
+		LogLevels: []logrus.Level{logrus.WarnLevel},
+	})
 
 	l.SetLevel(logrus.TraceLevel)
 
