@@ -36,3 +36,15 @@ func (e *Error) Marshall() []byte {
 func sysError(message string) *Error {
 	return NewError(message, "IE-0001", "something wrong happened while program executing")
 }
+func NotFoundError(message, dev_message string) *Error {
+	return NewError(message, "IE-0002", dev_message)
+}
+func BadRequestError(message, dev_message string) *Error {
+	return NewError(message, "IE-0003", dev_message)
+}
+func ValidationError(dev_message string) *Error {
+	return NewError("validation error occured", "IE-0004", dev_message)
+}
+func UnauthorizedError(dev_message string) *Error {
+	return NewError("error occured while trying to validate user", "IE-0005", dev_message)
+}

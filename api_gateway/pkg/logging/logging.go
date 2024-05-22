@@ -11,7 +11,7 @@ import (
 )
 
 type Hook struct {
-	Writer []io.Writer
+	Writer    []io.Writer
 	LogLevels []logrus.Level
 }
 
@@ -31,6 +31,7 @@ func (hook *Hook) Fire(entry *logrus.Entry) error {
 func (hook *Hook) Levels() []logrus.Level {
 	return hook.LogLevels
 }
+
 var e *logrus.Entry
 
 type Logger struct {
@@ -49,23 +50,23 @@ func init() {
 	l := logrus.New()
 	l.SetReportCaller(true)
 	l.Formatter = &logrus.TextFormatter{
-		CallerPrettyfier: func(f *runtime.Frame) (string, string){
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			filename := path.Base(f.File)
-			return fmt.Sprintf("%s:%d", filename, f.Line), fmt.Sprintf("%s()",f.Function)
+			return fmt.Sprintf("%s:%d", filename, f.Line), fmt.Sprintf("%s()", f.Function)
 		},
 		DisableColors: false,
 		FullTimestamp: true,
 	}
 
 	err := os.MkdirAll("logs", 0644)
-	if err != nil || os.IsExist(err){
+	if err != nil || os.IsExist(err) {
 		panic("can't create logs directory")
 	}
-
-	logFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	logFile, err := os.OpenFile("logs/debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
-	}	
+	}
+
 	errorLogFile, err := os.OpenFile("logs/errors.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
@@ -76,16 +77,16 @@ func init() {
 	}
 	l.SetOutput(io.Discard)
 
-	l.AddHook(&Hook {
-		Writer: []io.Writer{logFile, os.Stdout}, 
+	l.AddHook(&Hook{
+		Writer:    []io.Writer{logFile, os.Stdout},
 		LogLevels: []logrus.Level{logrus.DebugLevel, logrus.InfoLevel, logrus.TraceLevel},
 	})
-	l.AddHook(&Hook {
-		Writer: []io.Writer{errorLogFile, os.Stdout}, 
+	l.AddHook(&Hook{
+		Writer:    []io.Writer{errorLogFile, os.Stdout},
 		LogLevels: []logrus.Level{logrus.ErrorLevel, logrus.FatalLevel},
 	})
-	l.AddHook(&Hook {
-		Writer: []io.Writer{warnLogFile, os.Stdout}, 
+	l.AddHook(&Hook{
+		Writer:    []io.Writer{warnLogFile, os.Stdout},
 		LogLevels: []logrus.Level{logrus.WarnLevel},
 	})
 

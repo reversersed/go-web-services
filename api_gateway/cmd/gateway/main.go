@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/Auth"
+	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/auth"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
-	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/Auth"
+	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/auth"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/shutdown"
 )
@@ -27,11 +29,15 @@ func main() {
 	logger.Info("router initializing...")
 	router := httprouter.New()
 
-	logger.Info("helpers initializing....")
+	logger.Info("cache initializing...")
+	cache := freecache.NewCache(104857600) // 100 mb
+
+	logger.Info("services initializing....")
+	jwtService := jwt.NewService(cache, logger)
 
 	logger.Info("handlers registration...")
 	user_service := user.NewService(config.UserServiceURL, "/users", logger)
-	user_handler := auth.Handler{Logger: logger, UserService: user_service}
+	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService}
 	user_handler.Register(router)
 
 	logger.Info("starting application...")

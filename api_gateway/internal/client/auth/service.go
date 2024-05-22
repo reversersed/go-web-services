@@ -1,11 +1,14 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/fatih/structs"
 
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
@@ -29,26 +32,21 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 		},
 	}
 }
-func (c *client) AuthByLoginAndPassword(ctx context.Context, login, password string) (*User, error) {
+func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuery) (*User, error) {
 	c.base.Logger.Info("creating request filters")
-	filters := []rest.FilterOptions{
-		{
-			Field:  "login",
-			Values: []string{login},
-		},
-		{
-			Field:  "password",
-			Values: []string{password},
-		},
-	}
 
 	c.base.Logger.Info("building request url...")
-	uri, err := c.base.BuildURL(c.Path, filters)
+	uri, err := c.base.BuildURL(c.Path+"/auth", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
 	}
+	structs.DefaultTagName = "json"
+	body, err := json.Marshal(structs.Map(query))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest(http.MethodGet, uri, nil)
+	req, err := http.NewRequest(http.MethodPost, uri, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed while request creation: %v", err)
 	}

@@ -3,6 +3,7 @@ services:
     image: api_gateway
     volumes:
       - ./api_gateway/logs:/logs
+      - ./api_gateway/config:/config
     user: root
     build:
       context: ./api_gateway
