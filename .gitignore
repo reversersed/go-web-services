@@ -1,1 +1,5 @@
 api_gateway/logs
+api_user/logs
+data/
+docgen.bat
+start.bat

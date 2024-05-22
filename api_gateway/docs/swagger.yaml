@@ -1,0 +1,119 @@
+basePath: /api/v1/
+consumes:
+- application/json
+definitions:
+  auth.UserAuthQuery:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  errormiddleware.Error:
+    properties:
+      code:
+        type: string
+      dev_message:
+        type: string
+      message:
+        type: string
+    type: object
+  jwt.JwtResponse:
+    properties:
+      refreshtoken:
+        type: string
+      token:
+        type: string
+      username:
+        type: string
+    type: object
+  jwt.RefreshTokenQuery:
+    properties:
+      refreshtoken:
+        type: string
+    required:
+    - refreshtoken
+    type: object
+host: localhost:9000
+info:
+  contact: {}
+  title: API
+  version: "1.0"
+paths:
+  /users/login:
+    post:
+      description: |-
+        Finds user by login and password
+        Returns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)
+      parameters:
+      - description: User credentials
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/auth.UserAuthQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jwt.JwtResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Authenticates user
+      tags:
+      - users
+  /users/refresh:
+    post:
+      description: |-
+        Generate new token by provided refresh token
+        Refresh token stored in cache and expires in 7 days. If system was restarted, all tokens are cleared and sessions are deleted
+      parameters:
+      - description: Request query with user's refresh token
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/jwt.RefreshTokenQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jwt.JwtResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Generate new token
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

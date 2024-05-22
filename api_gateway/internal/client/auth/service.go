@@ -57,7 +57,7 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	req = req.WithContext(reqCtx)
 	response, err := c.base.SendRequest(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed sending request: %v", err)
+		return nil, err
 	}
 	if response.Valid {
 		var u User

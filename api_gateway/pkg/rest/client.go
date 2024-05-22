@@ -27,7 +27,7 @@ func (c *RestClient) SendRequest(r *http.Request) (*CustomResponse, error) {
 	c.Logger.Infof("sending requiest to %s", r.URL)
 	response, err := c.HttpClient.Do(r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %v", err)
+		return nil, err
 	}
 
 	resp := CustomResponse{

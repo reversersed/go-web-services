@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 )
 
 type Handler func(w http.ResponseWriter, r *http.Request) error
@@ -12,7 +12,6 @@ type Handler func(w http.ResponseWriter, r *http.Request) error
 func Middleware(h Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var internal_err *Error
-		w.Header().Add("Access-Control-Allow-Origin", "*")
 		err := h(w, r)
 		logger := logging.GetLogger()
 		if err != nil {

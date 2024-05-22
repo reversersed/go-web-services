@@ -1,4 +1,18 @@
 services:
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - ./data/mongodb:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: d9aeb352a9c668e8793b2412e895dc72a9260ae4d0e00e0cf624a209f3fff983
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
   api_gateway:
     image: api_gateway
     volumes:
@@ -10,3 +24,18 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 9000:9000
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  api_user:
+    image: api_user
+    volumes:
+      - ./api_user/logs:/logs
+      - ./api_user/config:/config
+    user: root
+    build:
+      context: ./api_user
+      dockerfile: ./Dockerfile
+    depends_on:
+      - api_gateway

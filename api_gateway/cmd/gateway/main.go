@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	_ "github.com/reversersed/go-web-services/tree/main/api_gateway/docs"
 	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/auth"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/auth"
@@ -17,8 +18,21 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/shutdown"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title API
+// @version 1.0
+
+// @host localhost:9000
+// @BasePath /api/v1/
+
+// @scheme http
+// @accept json
+
+// @securityDefinitions.apiKey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	logger := logging.GetLogger()
 	logger.Info("logger initialized")
@@ -36,12 +50,17 @@ func main() {
 	jwtService := jwt.NewService(cache, logger)
 
 	logger.Info("handlers registration...")
+	router.GET("/swagger/:any", swaggerHandler)
+
 	user_service := user.NewService(config.UserServiceURL, "/users", logger)
 	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService}
 	user_handler.Register(router)
 
 	logger.Info("starting application...")
 	start(router, logger, config)
+}
+func swaggerHandler(res http.ResponseWriter, req *http.Request, p httprouter.Params) {
+	httpSwagger.WrapHandler(res, req)
 }
 func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config) {
 	var server *http.Server

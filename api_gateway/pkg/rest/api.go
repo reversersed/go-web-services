@@ -36,3 +36,6 @@ type CustomError struct {
 func (e *CustomError) ToString() string {
 	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, e.DeveloperMessage)
 }
+func (e CustomError) Error() string {
+	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, e.DeveloperMessage)
+}

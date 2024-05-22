@@ -21,6 +21,7 @@ const (
 
 type UserClaims struct {
 	jwt.RegisteredClaims
+	Id    string `json:"uid"`
 	Login string `json:"login"`
 }
 
@@ -32,16 +33,20 @@ type jwtService struct {
 	Logger *logging.Logger
 	Cache  cache.Cache
 }
-
+type JwtResponse struct {
+	Username     string `json:"username"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshtoken"`
+}
 type JwtService interface {
-	GenerateAccessToken(u *auth.User) ([]byte, error)
-	UpdateRefreshToken(query *RefreshTokenQuery) ([]byte, error)
+	GenerateAccessToken(u *auth.User) (*JwtResponse, error)
+	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
 }
 
 func NewService(cache cache.Cache, logger *logging.Logger) JwtService {
 	return &jwtService{Logger: logger, Cache: cache}
 }
-func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) ([]byte, error) {
+func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
 	defer j.Cache.Delete([]byte(rt.RefreshToken))
 
 	userBytes, err := j.Cache.Get([]byte(rt.RefreshToken))
@@ -57,7 +62,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) ([]byte, error) {
 	}
 	return j.GenerateAccessToken(&u)
 }
-func (j *jwtService) GenerateAccessToken(u *auth.User) ([]byte, error) {
+func (j *jwtService) GenerateAccessToken(u *auth.User) (*JwtResponse, error) {
 	key := []byte(config.GetConfig().SecretToken)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {
@@ -88,15 +93,6 @@ func (j *jwtService) GenerateAccessToken(u *auth.User) ([]byte, error) {
 		j.Logger.Warn(err)
 		return nil, err
 	}
-
-	jsonBytes, err := json.Marshal(map[string]string{
-		"token":        token.String(),
-		"refreshtoken": refreshTokenUuid.String(),
-	})
-	if err != nil {
-		j.Logger.Warn(err)
-		return nil, err
-	}
-
-	return jsonBytes, nil
+	responseToken := &JwtResponse{Username: u.Login, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
+	return responseToken, nil
 }
