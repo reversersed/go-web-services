@@ -6,6 +6,6 @@ type User struct {
 }
 
 type UserAuthQuery struct {
-	Login    string `json:"login" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Login    string `json:"login" validate:"required" example:"admin"`
+	Password string `json:"password" validate:"required" example:"admin"`
 }

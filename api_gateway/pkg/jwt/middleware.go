@@ -48,7 +48,7 @@ func Middleware(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserClaimKey, claims.Login)
+		ctx := context.WithValue(r.Context(), UserClaimKey, claims.ID)
 		h(w, r.WithContext(ctx))
 	}
 }

@@ -21,7 +21,6 @@ const (
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Id    string `json:"uid"`
 	Login string `json:"login"`
 }
 
@@ -73,7 +72,7 @@ func (j *jwtService) GenerateAccessToken(u *auth.User) (*JwtResponse, error) {
 
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			//ID:        u.UUID,
+			ID:        u.Id,
 			Audience:  []string{"users"},
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
 		},

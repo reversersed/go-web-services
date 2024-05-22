@@ -5,8 +5,10 @@ definitions:
   auth.UserAuthQuery:
     properties:
       login:
+        example: admin
         type: string
       password:
+        example: admin
         type: string
     required:
     - login

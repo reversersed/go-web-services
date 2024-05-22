@@ -8,6 +8,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type db struct {
@@ -16,12 +17,31 @@ type db struct {
 }
 
 func NewStorage(storage *mongo.Database, collection string, logger *logging.Logger) client.Storage {
-	return &db{
+	db := &db{
 		collection: storage.Collection(collection),
 		logger:     logger,
 	}
+	defer db.seedAdminAccount()
+	return db
 }
+func (d *db) seedAdminAccount() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	result := d.collection.FindOne(ctx, bson.M{"login": "admin"})
+	if err := result.Err(); err != nil {
+		d.logger.Info("starting seeding admin account...")
+		pass, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.MinCost)
+		admin := &client.User{Login: "admin", Password: pass}
+		response, err := d.collection.InsertOne(ctx, admin)
+		if err != nil {
+			d.logger.Fatalf("cannot seed admin account: %v", err)
+		}
+		d.logger.Infof("admin account seeded with id %v", response.InsertedID)
+		return
+	}
+	d.logger.Info("admin account exists. seed not executed")
+}
 func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error) {
 	filter := bson.M{"login": login}
 

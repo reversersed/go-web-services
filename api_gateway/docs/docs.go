@@ -126,10 +126,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "login": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "admin"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "admin"
                 }
             }
         },
