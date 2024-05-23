@@ -1,8 +1,9 @@
 package auth
 
 type User struct {
-	Id    string
-	Login string
+	Id    string   `json:"id"`
+	Login string   `json:"login"`
+	Roles []string `json:"roles"`
 }
 
 type UserAuthQuery struct {

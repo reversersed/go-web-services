@@ -7,6 +7,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,12 +33,20 @@ func (d *db) seedAdminAccount() {
 	if err := result.Err(); err != nil {
 		d.logger.Info("starting seeding admin account...")
 		pass, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.MinCost)
-		admin := &client.User{Login: "admin", Password: pass}
+		admin := &client.User{
+			Login:    "admin",
+			Password: pass,
+			Roles:    []string{"user", "admin"},
+		}
 		response, err := d.collection.InsertOne(ctx, admin)
 		if err != nil {
 			d.logger.Fatalf("cannot seed admin account: %v", err)
 		}
-		d.logger.Infof("admin account seeded with id %v", response.InsertedID)
+		id, ok := response.InsertedID.(primitive.ObjectID)
+		if !ok {
+			d.logger.Fatalf("can't create id for admin document")
+		}
+		d.logger.Infof("admin account seeded with id %v", id.Hex())
 		return
 	}
 	d.logger.Info("admin account exists. seed not executed")

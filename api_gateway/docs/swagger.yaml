@@ -27,6 +27,10 @@ definitions:
     properties:
       refreshtoken:
         type: string
+      roles:
+        items:
+          type: string
+        type: array
       token:
         type: string
       username:

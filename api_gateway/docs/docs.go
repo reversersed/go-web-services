@@ -155,6 +155,12 @@ const docTemplate = `{
                 "refreshtoken": {
                     "type": "string"
                 },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "token": {
                     "type": "string"
                 },

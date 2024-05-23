@@ -3,3 +3,4 @@ api_user/logs
 data/
 docgen.bat
 start.bat
+docker-compose.localhost.yml

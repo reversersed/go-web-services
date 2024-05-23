@@ -21,7 +21,8 @@ const (
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Login string `json:"login"`
+	Login string   `json:"login"`
+	Roles []string `json:"roles"`
 }
 
 type RefreshTokenQuery struct {
@@ -33,9 +34,10 @@ type jwtService struct {
 	Cache  cache.Cache
 }
 type JwtResponse struct {
-	Username     string `json:"username"`
-	Token        string `json:"token"`
-	RefreshToken string `json:"refreshtoken"`
+	Username     string   `json:"username"`
+	Roles        []string `json:"roles"`
+	Token        string   `json:"token"`
+	RefreshToken string   `json:"refreshtoken"`
 }
 type JwtService interface {
 	GenerateAccessToken(u *auth.User) (*JwtResponse, error)
@@ -76,6 +78,7 @@ func (j *jwtService) GenerateAccessToken(u *auth.User) (*JwtResponse, error) {
 			Audience:  []string{"users"},
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
 		},
+		Roles: u.Roles,
 		Login: u.Login,
 	}
 	token, err := builder.Build(claims)
@@ -92,6 +95,6 @@ func (j *jwtService) GenerateAccessToken(u *auth.User) (*JwtResponse, error) {
 		j.Logger.Warn(err)
 		return nil, err
 	}
-	responseToken := &JwtResponse{Username: u.Login, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
+	responseToken := &JwtResponse{Username: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
 	return responseToken, nil
 }
