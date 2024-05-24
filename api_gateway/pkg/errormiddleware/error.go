@@ -59,3 +59,6 @@ func UnauthorizedError(errors []string, message string) *Error {
 func NotUniqueError(errors []string, message string) *Error {
 	return NewError(message, "IE-0006", errors)
 }
+func ForbiddenError(errors []string, message string) *Error {
+	return NewError(message, "IE-0007", errors)
+}
