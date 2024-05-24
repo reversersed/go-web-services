@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
@@ -14,13 +15,14 @@ import (
 )
 
 const (
-	url_auth    = "/api/v1/users/login"
-	url_refresh = "/api/v1/users/refresh"
-	url_signup  = "/api/v1/users/signup"
+	url_auth     = "/api/v1/users/login"
+	url_refresh  = "/api/v1/users/refresh"
+	url_register = "/api/v1/users/register"
 )
 
 type UserService interface {
 	AuthByLoginAndPassword(ctx context.Context, query *model.UserAuthQuery) (*model.User, error)
+	RegisterUser(ctx context.Context, query *model.UserRegisterQuery) (*model.User, error)
 }
 
 type Handler struct {
@@ -32,6 +34,7 @@ type Handler struct {
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, mw.Middleware(h.Authenticate))
 	router.HandlerFunc(http.MethodPost, url_refresh, mw.Middleware(h.UpdateToken))
+	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
 	h.Logger.Info("auth service registered")
 }
 
@@ -105,5 +108,91 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
+	return nil
+}
+
+// @Summary Register user
+// @Description Creates a new instance of user and returns authorization principals
+// @Produce json
+// @Tags users
+// @Param query body model.UserRegisterQuery true "User credentials"
+// @Success 200 {object} jwt.JwtResponse
+// @Failure 409 {object} errormiddleware.Error
+// @Failure 500 {object} errormiddleware.Error
+// @Failure 501 {object} errormiddleware.Error
+// @Router /users/register [post]
+func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Content-Type", "application/json")
+
+	defer r.Body.Close()
+	var query model.UserRegisterQuery
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+	if err := validator.New().Struct(query); err != nil {
+		return mw.ValidationError(err.(validator.ValidationErrors), "wrong query format")
+	}
+	errs := h.passwordValidation(query.Password)
+	if errs != nil {
+		return mw.ValidationErrorByString(errs, "wrong password format")
+	}
+	model, err := h.UserService.RegisterUser(r.Context(), &query)
+	if err != nil {
+		return err
+	}
+	token, err := h.JwtService.GenerateAccessToken(model)
+	if err != nil {
+		h.Logger.Warn(err)
+		return err
+	}
+	data, _ := json.Marshal(token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return nil
+}
+func (h *Handler) passwordValidation(password string) []string {
+	var errors []string
+
+	//lowercase character
+	mathed, err := regexp.MatchString("[a-z]+", password)
+	if err != nil {
+		h.Logger.Errorf("cant check user password: %v", err)
+		return []string{"internal error. check logs"}
+	}
+	if !mathed {
+		errors = append(errors, "password must contain at least one lowercase letter")
+	}
+	//uppercase character
+	mathed, err = regexp.MatchString("[A-Z]+", password)
+	if err != nil {
+		h.Logger.Errorf("cant check user password: %v", err)
+		return []string{"internal error. check logs"}
+	}
+	if !mathed {
+		errors = append(errors, "password must contain at least one uppercase letter")
+	}
+	//one digit
+	mathed, err = regexp.MatchString("[0-9]+", password)
+	if err != nil {
+		h.Logger.Errorf("cant check user password: %v", err)
+		return []string{"internal error. check logs"}
+	}
+	if !mathed {
+		errors = append(errors, "password must contain at least one digit")
+	}
+	//special symbol
+	mathed, err = regexp.MatchString("[!@#\\$%\\^&*()_\\+-.,]+", password)
+	if err != nil {
+		h.Logger.Errorf("cant check user password: %v", err)
+		return []string{"internal error. check logs"}
+	}
+	if !mathed {
+		errors = append(errors, "password must contain at least one special character")
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
 	return nil
 }

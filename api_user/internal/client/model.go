@@ -13,3 +13,7 @@ type AuthUserByLoginAndPassword struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+type RegisterUserQuery struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}

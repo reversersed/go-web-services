@@ -12,6 +12,7 @@ type Handler func(w http.ResponseWriter, r *http.Request) error
 func Middleware(h Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var internal_err *Error
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		err := h(w, r)
 		logger := logging.GetLogger()
 		if err != nil {
@@ -26,6 +27,8 @@ func Middleware(h Handler) http.HandlerFunc {
 					w.WriteHeader(http.StatusNotImplemented)
 				case "IE-0005":
 					w.WriteHeader(http.StatusUnauthorized)
+				case "IE-0006":
+					w.WriteHeader(http.StatusConflict)
 				default:
 					w.WriteHeader(http.StatusBadRequest)
 				}

@@ -45,6 +45,22 @@ definitions:
     - login
     - password
     type: object
+  user.UserRegisterQuery:
+    properties:
+      login:
+        example: user
+        maxLength: 16
+        minLength: 4
+        type: string
+      password:
+        example: User!1password
+        maxLength: 32
+        minLength: 8
+        type: string
+    required:
+    - login
+    - password
+    type: object
 host: localhost:9000
 info:
   contact: {}
@@ -117,6 +133,38 @@ paths:
           schema:
             $ref: '#/definitions/errormiddleware.Error'
       summary: Generate new token
+      tags:
+      - users
+  /users/register:
+    post:
+      description: Creates a new instance of user and returns authorization principals
+      parameters:
+      - description: User credentials
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserRegisterQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jwt.JwtResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Register user
       tags:
       - users
 securityDefinitions:

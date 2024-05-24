@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
@@ -53,6 +54,39 @@ func (d *db) seedAdminAccount() {
 }
 func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error) {
 	filter := bson.M{"login": login}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	result := d.collection.FindOne(ctx, filter)
+	if err := result.Err(); err != nil {
+		d.logger.Warnf("error while fetching user from db: %v", err)
+		return nil, err
+	}
+	var u client.User
+	if err := result.Decode(&u); err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+func (d *db) AddUser(ctx context.Context, user *client.User) (string, error) {
+	contx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	result, err := d.collection.InsertOne(contx, user)
+	if err != nil {
+		d.logger.Warnf("error while user creation: %v", err)
+		return "", err
+	}
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if ok {
+		return oid.Hex(), nil
+	}
+	d.logger.Warnf("cant get created user id: %v (%v)", oid.Hex(), oid)
+	return "", fmt.Errorf("cant resolve user id")
+}
+func (d *db) FindById(ctx context.Context, id string) (*client.User, error) {
+	filter := bson.M{"_id": id}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

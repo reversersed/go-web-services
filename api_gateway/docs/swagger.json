@@ -108,6 +108,55 @@
                     }
                 }
             }
+        },
+        "/users/register": {
+            "post": {
+                "description": "Creates a new instance of user and returns authorization principals",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserRegisterQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jwt.JwtResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "501": {
+                        "description": "Not Implemented",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -173,6 +222,27 @@
                 "password": {
                     "type": "string",
                     "example": "admin"
+                }
+            }
+        },
+        "user.UserRegisterQuery": {
+            "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
+            "properties": {
+                "login": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "minLength": 4,
+                    "example": "user"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 8,
+                    "example": "User!1password"
                 }
             }
         }

@@ -50,6 +50,12 @@ func ValidationError(errors validator.ValidationErrors, message string) *Error {
 	}
 	return NewError(message, "IE-0004", errs)
 }
+func ValidationErrorByString(errors []string, message string) *Error {
+	return NewError(message, "IE-0004", errors)
+}
 func UnauthorizedError(errors []string, message string) *Error {
 	return NewError(message, "IE-0005", errors)
+}
+func NotUniqueError(errors []string, message string) *Error {
+	return NewError(message, "IE-0006", errors)
 }

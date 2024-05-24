@@ -27,6 +27,8 @@ func Middleware(h Handler) http.HandlerFunc {
 					w.WriteHeader(http.StatusNotImplemented)
 				case "IE-0005":
 					w.WriteHeader(http.StatusUnauthorized)
+				case "IE-0006":
+					w.WriteHeader(http.StatusConflict)
 				default:
 					w.WriteHeader(http.StatusBadRequest)
 				}
