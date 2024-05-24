@@ -17,8 +17,8 @@ const (
 )
 
 type Service interface {
-	SignInUser(ctx context.Context, login, password string) (*client.User, error)
-	RegisterUser(ctx context.Context, login, password string) (*client.User, error)
+	SignInUser(ctx context.Context, query *client.AuthUserByLoginAndPassword) (*client.User, error)
+	RegisterUser(ctx context.Context, query *client.RegisterUserQuery) (*client.User, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -39,7 +39,7 @@ func (h *Handler) AuthUser(w http.ResponseWriter, r *http.Request) error {
 		h.Logger.Warn("error occured while decoding request body: %w", err)
 		return errormiddleware.BadRequestError("invalid json scheme", []string{err.Error()})
 	}
-	u, err := h.UserService.SignInUser(r.Context(), query.Login, query.Password)
+	u, err := h.UserService.SignInUser(r.Context(), &query)
 	if err != nil {
 		return errormiddleware.NotFoundError("user with provided login and password not found", []string{err.Error()})
 	}
@@ -62,7 +62,7 @@ func (h *Handler) RegUser(w http.ResponseWriter, r *http.Request) error {
 		return errormiddleware.BadRequestError("invalid json scheme", []string{err.Error()})
 	}
 
-	u, err := h.UserService.RegisterUser(r.Context(), query.Login, query.Password)
+	u, err := h.UserService.RegisterUser(r.Context(), &query)
 	if err != nil {
 		return err
 	}

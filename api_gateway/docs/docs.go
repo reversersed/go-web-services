@@ -20,7 +20,7 @@ const docTemplate = `{
     "paths": {
         "/users/login": {
             "post": {
-                "description": "Finds user by login and password\nReturns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)",
+                "description": "Finds user by login and password\nReturns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)\nLogin field can be provided with user login or email",
                 "produces": [
                     "application/json"
                 ],
@@ -187,6 +187,9 @@ const docTemplate = `{
         "jwt.JwtResponse": {
             "type": "object",
             "properties": {
+                "login": {
+                    "type": "string"
+                },
                 "refreshtoken": {
                     "type": "string"
                 },
@@ -197,9 +200,6 @@ const docTemplate = `{
                     }
                 },
                 "token": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }
@@ -235,10 +235,15 @@ const docTemplate = `{
         "user.UserRegisterQuery": {
             "type": "object",
             "required": [
+                "email",
                 "login",
                 "password"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
                 "login": {
                     "type": "string",
                     "maxLength": 16,

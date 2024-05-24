@@ -18,27 +18,32 @@ type service struct {
 func NewService(storage Storage, logger *logging.Logger) *service {
 	return &service{storage: storage, logger: logger}
 }
-func (s *service) SignInUser(ctx context.Context, login, password string) (*User, error) {
-	u, err := s.storage.FindByLogin(ctx, login)
+func (s *service) SignInUser(ctx context.Context, model *AuthUserByLoginAndPassword) (*User, error) {
+	u, err := s.storage.FindByLogin(ctx, model.Login)
 	if err != nil {
-		return nil, err
+		u, err = s.storage.FindByEmail(ctx, model.Login)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if err = bcrypt.CompareHashAndPassword(u.Password, []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword(u.Password, []byte(model.Password)); err != nil {
 		return nil, err
 	}
 
 	return u, nil
 }
-func (s *service) RegisterUser(ctx context.Context, login, password string) (*User, error) {
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+func (s *service) RegisterUser(ctx context.Context, model *RegisterUserQuery) (*User, error) {
+	pass, err := bcrypt.GenerateFromPassword([]byte(model.Password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
 	}
 	user := User{
-		Login:    login,
-		Password: pass,
-		Roles:    []string{"user"},
+		Login:          model.Login,
+		Password:       pass,
+		Roles:          []string{"user"},
+		Email:          model.Email,
+		EmailConfirmed: false,
 	}
 	cntx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

@@ -15,6 +15,8 @@ definitions:
     type: object
   jwt.JwtResponse:
     properties:
+      login:
+        type: string
       refreshtoken:
         type: string
       roles:
@@ -22,8 +24,6 @@ definitions:
           type: string
         type: array
       token:
-        type: string
-      username:
         type: string
     type: object
   jwt.RefreshTokenQuery:
@@ -47,6 +47,9 @@ definitions:
     type: object
   user.UserRegisterQuery:
     properties:
+      email:
+        example: user@example.com
+        type: string
       login:
         example: user
         maxLength: 16
@@ -58,6 +61,7 @@ definitions:
         minLength: 8
         type: string
     required:
+    - email
     - login
     - password
     type: object
@@ -72,6 +76,7 @@ paths:
       description: |-
         Finds user by login and password
         Returns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)
+        Login field can be provided with user login or email
       parameters:
       - description: User credentials
         in: body

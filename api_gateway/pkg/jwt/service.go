@@ -24,6 +24,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 	Login string   `json:"login"`
 	Roles []string `json:"roles"`
+	Email string   `json:"email"`
 }
 
 type RefreshTokenQuery struct {
@@ -35,7 +36,7 @@ type jwtService struct {
 	Cache  cache.Cache
 }
 type JwtResponse struct {
-	Username     string   `json:"username"`
+	Login        string   `json:"login"`
 	Roles        []string `json:"roles"`
 	Token        string   `json:"token"`
 	RefreshToken string   `json:"refreshtoken"`
@@ -89,6 +90,7 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 		},
 		Roles: u.Roles,
 		Login: u.Login,
+		Email: u.Email,
 	}
 	token, err := builder.Build(claims)
 	if err != nil {
@@ -104,6 +106,6 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 		j.Logger.Warn(err)
 		return nil, err
 	}
-	responseToken := &JwtResponse{Username: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
+	responseToken := &JwtResponse{Login: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
 	return responseToken, nil
 }

@@ -35,9 +35,11 @@ func (d *db) seedAdminAccount() {
 		d.logger.Info("starting seeding admin account...")
 		pass, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.MinCost)
 		admin := &client.User{
-			Login:    "admin",
-			Password: pass,
-			Roles:    []string{"user", "admin"},
+			Login:          "admin",
+			Password:       pass,
+			Roles:          []string{"user", "admin"},
+			Email:          "admin@example.com",
+			EmailConfirmed: true,
 		}
 		response, err := d.collection.InsertOne(ctx, admin)
 		if err != nil {
@@ -54,6 +56,23 @@ func (d *db) seedAdminAccount() {
 }
 func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error) {
 	filter := bson.M{"login": login}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	result := d.collection.FindOne(ctx, filter)
+	if err := result.Err(); err != nil {
+		d.logger.Warnf("error while fetching user from db: %v", err)
+		return nil, err
+	}
+	var u client.User
+	if err := result.Decode(&u); err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+func (d *db) FindByEmail(ctx context.Context, email string) (*client.User, error) {
+	filter := bson.M{"email": email}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
