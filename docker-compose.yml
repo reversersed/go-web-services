@@ -33,6 +33,7 @@ services:
     volumes:
       - ./api_user/logs:/logs
       - ./api_user/config:/config
+      - ./api_user/internal/email/templates:/templates
     user: root
     build:
       context: ./api_user

@@ -1,0 +1,107 @@
+<!-- Template for Email message with confirmation -->
+<!DOCTYPE html>
+<html>
+	<body
+		style="
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+		"
+	>
+		<div
+			style="
+				display: flex;
+				padding-top: 80px;
+				padding-bottom: 20px;
+				align-items: center;
+				font: 1em sans-serif;
+				font-weight: 600;
+				width: 400px;
+				height: auto;
+				background-color: darkblue;
+				border-radius: 15px;
+				color: white;
+				gap: 30px;
+			"
+		>
+			<table style="border-spacing: 25px">
+				<tr>
+					<td style="text-align: center">
+						<span style="font-size: 1.5em">{{.ProjectName}}</span>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center">
+						<span>Здравствуйте, {{.Login}}!</span>
+					</td>
+				</tr>
+				<tr>
+					<td
+						style="padding-left: 60px; padding-right: 60px; text-align: center"
+					>
+						<span>Для подтверждения своей почты нажмите на кнопку ниже.</span>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center">
+						<a
+							href="{{.ConfirmationURL}}"
+							style="
+								transition: 0.8s all;
+								color: white;
+								text-decoration: none;
+								border-radius: 10px;
+								background-color: blue;
+								padding: 10px 15px 10px 15px;
+								letter-spacing: normal;
+							"
+							onmouseover="this.style.color='black'; this.style.backgroundColor='cyan'; this.style.padding='15px 20px 15px 20px'; this.style.letterSpacing='5px'"
+							onmouseout="this.style.color='white'; this.style.backgroundColor='blue'; this.style.padding='10px 15px 10px 15px'; this.style.letterSpacing='normal'"
+							>Подтвердить</a
+						>
+					</td>
+				</tr>
+				<tr>
+					<td
+						style="
+							text-align: center;
+							padding-left: 60px;
+							padding-right: 60px;
+							text-align: center;
+							font-size: 12px;
+							margin-top: 50px;
+							color: grey;
+						"
+					>
+						<span
+							>Если у Вас не отображается кнопка, для подтверждения Вы также
+							можете перейти по ссылке:
+							<a style="color: grey" href="{{.ConfirmationURL}}"
+								>{{.ConfirmationURL}}</a
+							></span
+						>
+					</td>
+				</tr>
+				<tr>
+					<td
+						style="
+							margin-top: 20px;
+							padding-left: 60px;
+							padding-right: 60px;
+							text-align: center;
+							font-size: 12px;
+							margin-top: 20px;
+							color: grey;
+						"
+					>
+						<span
+							>Если Вы получили это письмо по ошибке, пожалуйста, проигнорируйте
+							его</span
+						>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</body>
+</html>

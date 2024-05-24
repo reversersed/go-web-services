@@ -41,25 +41,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache",
                         "schema": {
                             "$ref": "#/definitions/jwt.JwtResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Returns when service can't find user by provided credentials (user not found)",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Returns when there's some internal error that needs to be fixed",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "501": {
-                        "description": "Not Implemented",
+                        "description": "Returns when provided data was not validated",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -90,25 +90,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful response. Returns the same data as in authorization",
                         "schema": {
                             "$ref": "#/definitions/jwt.JwtResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Returns when service can't find user by provided credentials (user not found)",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Returns when there's some internal error that needs to be fixed",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "501": {
-                        "description": "Not Implemented",
+                        "description": "Returns when provided data was not validated",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -139,25 +139,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful token response. Returns the same response as in authorization",
                         "schema": {
                             "$ref": "#/definitions/jwt.JwtResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Returns when there's already exist user with provided login",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Returns when there's some internal error that needs to be fixed",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "501": {
-                        "description": "Not Implemented",
+                        "description": "Returns when provided data was not validated",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }

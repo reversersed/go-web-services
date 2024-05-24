@@ -7,7 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 )
 
@@ -73,5 +73,6 @@ func (h *Handler) RegUser(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(object)
+	h.Logger.Infof("user %s has been registered", query.Login)
 	return nil
 }

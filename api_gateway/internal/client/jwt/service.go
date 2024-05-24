@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 

@@ -15,6 +15,10 @@ type Config struct {
 	Db_Port       int    `env:"DB_PORT" env-required:"true"`
 	Db_Name       string `env:"DB_NAME"`
 	Db_Pass       string `env:"DB_PASS"`
+	SmtpHost      string `env:"SMTP_HOST"`
+	SmtpPort      int    `env:"SMTP_PORT"`
+	SmtpLogin     string `env:"SMTP_LOGIN"`
+	SmtpPassword  string `env:"SMTP_PASS"`
 }
 
 var cfg *Config

@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/jwt"
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
-	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
+	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 

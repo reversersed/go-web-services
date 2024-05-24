@@ -10,7 +10,7 @@ import (
 
 	"github.com/fatih/structs"
 
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/rest"
 )

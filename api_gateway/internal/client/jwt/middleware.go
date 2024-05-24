@@ -11,7 +11,7 @@ import (
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 

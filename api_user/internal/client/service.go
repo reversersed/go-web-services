@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -51,6 +51,11 @@ func (s *service) RegisterUser(ctx context.Context, model *RegisterUserQuery) (*
 	if err == nil {
 		s.logger.Warnf("user %s couldn't register because of login collision", user.Login)
 		return nil, errormiddleware.NotUniqueError([]string{"user with provided login already exist"}, "error while registering user")
+	}
+	_, err = s.storage.FindByEmail(cntx, user.Email)
+	if err == nil {
+		s.logger.Warnf("user %s couldn't register because of email (%s) collision", user.Login, user.Email)
+		return nil, errormiddleware.NotUniqueError([]string{"email already taken"}, "error while registering user")
 	}
 	result, err := s.storage.AddUser(cntx, &user)
 	if err != nil {
