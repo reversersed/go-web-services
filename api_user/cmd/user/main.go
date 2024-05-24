@@ -16,7 +16,6 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/handlers/user"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/mongo"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/shutdown"
 )
 
@@ -31,7 +30,7 @@ func main() {
 	router := httprouter.New()
 
 	logger.Info("database initializing...")
-	db_client, err := mongo.NewClient(context.Background(), config)
+	db_client, err := db.NewClient(context.Background(), config)
 	if err != nil {
 		logger.Fatal(err)
 	}

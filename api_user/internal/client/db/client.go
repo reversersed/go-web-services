@@ -1,4 +1,4 @@
-package mongo
+package db
 
 import (
 	"context"
@@ -28,6 +28,7 @@ func NewClient(ctx context.Context, cfg *config.Config) (*mongo.Database, error)
 			Username:    cfg.Db_Name,
 			Password:    cfg.Db_Pass,
 			PasswordSet: true,
+			AuthSource:  cfg.Db_Auth,
 		})
 	}
 	client, err := mongo.Connect(reqCtx, clientOptions)
