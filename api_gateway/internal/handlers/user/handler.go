@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
-	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/auth"
+	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
@@ -55,7 +55,7 @@ func (h *Handler) UpdateToken(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	if err := validator.New().Struct(query); err != nil {
-		return mw.ValidationError(err.Error())
+		return mw.ValidationError(err.(validator.ValidationErrors), "wrong token format")
 	}
 	token, err := h.JwtService.UpdateRefreshToken(&query)
 	if err != nil {
@@ -90,7 +90,7 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	if err := validator.New().Struct(query); err != nil {
-		return mw.ValidationError(err.Error())
+		return mw.ValidationError(err.(validator.ValidationErrors), "wrong query format")
 	}
 	model, err := h.UserService.AuthByLoginAndPassword(r.Context(), &query)
 	if err != nil {

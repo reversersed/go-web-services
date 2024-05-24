@@ -30,11 +30,11 @@ func (h *Handler) AuthUser(w http.ResponseWriter, r *http.Request) error {
 	h.Logger.Info("decoding auth body...")
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		h.Logger.Warn("error occured while decoding request body: %w", err)
-		return errormiddleware.BadRequestError("invalid json scheme", err.Error())
+		return errormiddleware.BadRequestError("invalid json scheme", []string{err.Error()})
 	}
 	u, err := h.UserService.SignInUser(r.Context(), query.Login, query.Password)
 	if err != nil {
-		return errormiddleware.NotFoundError("user with provided login and password not found", err.Error())
+		return errormiddleware.NotFoundError("user with provided login and password not found", []string{err.Error()})
 	}
 
 	object, err := json.Marshal(u)

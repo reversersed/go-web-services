@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.UserAuthQuery"
+                            "$ref": "#/definitions/user.UserAuthQuery"
                         }
                     }
                 ],
@@ -118,31 +118,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.UserAuthQuery": {
-            "type": "object",
-            "required": [
-                "login",
-                "password"
-            ],
-            "properties": {
-                "login": {
-                    "type": "string",
-                    "example": "admin"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "admin"
-                }
-            }
-        },
         "errormiddleware.Error": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "string"
                 },
-                "dev_message": {
-                    "type": "string"
+                "dev_messages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "message": {
                     "type": "string"
@@ -177,6 +163,23 @@ const docTemplate = `{
             "properties": {
                 "refreshtoken": {
                     "type": "string"
+                }
+            }
+        },
+        "user.UserAuthQuery": {
+            "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
+            "properties": {
+                "login": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "admin"
                 }
             }
         }

@@ -2,24 +2,14 @@ basePath: /api/v1/
 consumes:
 - application/json
 definitions:
-  auth.UserAuthQuery:
-    properties:
-      login:
-        example: admin
-        type: string
-      password:
-        example: admin
-        type: string
-    required:
-    - login
-    - password
-    type: object
   errormiddleware.Error:
     properties:
       code:
         type: string
-      dev_message:
-        type: string
+      dev_messages:
+        items:
+          type: string
+        type: array
       message:
         type: string
     type: object
@@ -43,6 +33,18 @@ definitions:
     required:
     - refreshtoken
     type: object
+  user.UserAuthQuery:
+    properties:
+      login:
+        example: admin
+        type: string
+      password:
+        example: admin
+        type: string
+    required:
+    - login
+    - password
+    type: object
 host: localhost:9000
 info:
   contact: {}
@@ -60,7 +62,7 @@ paths:
         name: query
         required: true
         schema:
-          $ref: '#/definitions/auth.UserAuthQuery'
+          $ref: '#/definitions/user.UserAuthQuery'
       produces:
       - application/json
       responses:

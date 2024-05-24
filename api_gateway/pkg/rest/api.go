@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type CustomResponse struct {
@@ -28,14 +29,14 @@ func (r *CustomResponse) Location() (*url.URL, error) {
 }
 
 type CustomError struct {
-	Message          string `json:"message,omitempty"`
-	ErrorCode        string `json:"code,omitempty"`
-	DeveloperMessage string `json:"dev_message,omitempty"`
+	Message          string   `json:"message,omitempty"`
+	ErrorCode        string   `json:"code,omitempty"`
+	DeveloperMessage []string `json:"dev_messages,omitempty"`
 }
 
 func (e *CustomError) ToString() string {
-	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, e.DeveloperMessage)
+	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, strings.Join(e.DeveloperMessage, ", "))
 }
 func (e CustomError) Error() string {
-	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, e.DeveloperMessage)
+	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.ErrorCode, e.Message, strings.Join(e.DeveloperMessage, ", "))
 }

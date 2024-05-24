@@ -36,6 +36,7 @@ require (
 	github.com/coocood/freecache v1.2.4
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/fatih/structs v1.1.0
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0

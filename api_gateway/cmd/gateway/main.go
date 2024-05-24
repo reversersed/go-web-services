@@ -11,9 +11,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/reversersed/go-web-services/tree/main/api_gateway/docs"
-	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/auth"
+	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
-	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/auth"
+	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"

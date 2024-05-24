@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/auth"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
@@ -26,7 +27,7 @@ type UserClaims struct {
 }
 
 type RefreshTokenQuery struct {
-	RefreshToken string `json:"refreshtoken" validate:"required"`
+	RefreshToken string `json:"refreshtoken" validate:"required,jwt"`
 }
 
 type jwtService struct {
@@ -40,7 +41,7 @@ type JwtResponse struct {
 	RefreshToken string   `json:"refreshtoken"`
 }
 type JwtService interface {
-	GenerateAccessToken(u *auth.User) (*JwtResponse, error)
+	GenerateAccessToken(u *user.User) (*JwtResponse, error)
 	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
 }
 
@@ -48,14 +49,22 @@ func NewService(cache cache.Cache, logger *logging.Logger) JwtService {
 	return &jwtService{Logger: logger, Cache: cache}
 }
 func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
+	if err := validator.New().Struct(rt); err != nil {
+		tp, ok := err.(validator.ValidationErrors)
+		if ok {
+			return nil, errormiddleware.ValidationError(tp, "wrong refresh token format")
+		} else {
+			return nil, errormiddleware.NotFoundError("wrong refresh token format", []string{err.Error()})
+		}
+	}
 	defer j.Cache.Delete([]byte(rt.RefreshToken))
 
 	userBytes, err := j.Cache.Get([]byte(rt.RefreshToken))
 	if err != nil {
 		j.Logger.Warn(err)
-		return nil, errormiddleware.NotFoundError(err.Error(), "couldn't get refresh token from cache")
+		return nil, errormiddleware.NotFoundError("couldn't get refresh token from cache", []string{err.Error()})
 	}
-	var u auth.User
+	var u user.User
 	err = json.Unmarshal(userBytes, &u)
 	if err != nil {
 		j.Logger.Warn(err)
@@ -63,7 +72,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	}
 	return j.GenerateAccessToken(&u)
 }
-func (j *jwtService) GenerateAccessToken(u *auth.User) (*JwtResponse, error) {
+func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 	key := []byte(config.GetConfig().SecretToken)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {

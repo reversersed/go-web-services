@@ -36,7 +36,7 @@ func Middleware(h Handler) http.HandlerFunc {
 			}
 			logger.Errorf("Undefined error occured: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(sysError(err.Error()).Marshall())
+			w.Write(sysError([]string{err.Error()}).Marshall())
 		}
 	}
 }
