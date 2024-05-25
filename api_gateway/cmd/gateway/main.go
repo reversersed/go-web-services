@@ -11,11 +11,11 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/reversersed/go-web-services/tree/main/api_gateway/docs"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/jwt"
 	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/shutdown"
 	httpSwagger "github.com/swaggo/http-swagger"

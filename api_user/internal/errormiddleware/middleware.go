@@ -35,10 +35,12 @@ func Middleware(h Handler) http.HandlerFunc {
 					w.WriteHeader(http.StatusBadRequest)
 				}
 				logger.Warnf("Error %s occured: %s (%s)", err.Code, err.Message, err.DeveloperMessage)
+				w.Header().Add("Content-Type", "application/json")
 				w.Write(err.Marshall())
 				return
 			}
 			logger.Errorf("Undefined error occured: %v", err)
+			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(sysError([]string{err.Error()}).Marshall())
 		}

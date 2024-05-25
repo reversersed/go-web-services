@@ -64,7 +64,7 @@ func SendEmailConfirmationMessage(receiver string, userlogin string, code string
 	}{
 		ProjectName:     "Example",
 		Login:           userlogin,
-		ConfirmationURL: fmt.Sprintf("http://example.com/emailLogin?authcode=%s", code),
+		ConfirmationURL: fmt.Sprintf("http://localhost:9000/api/v1/users/email?code=%s", code),
 	})
 	if err != nil {
 		logger.Errorf("can't create email body: %s", err)

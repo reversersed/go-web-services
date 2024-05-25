@@ -2,9 +2,12 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/reversersed/go-web-services/tree/main/api_user/internal/email"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -13,10 +16,56 @@ import (
 type service struct {
 	storage Storage
 	logger  *logging.Logger
+	cache   cache.Cache
 }
 
-func NewService(storage Storage, logger *logging.Logger) *service {
-	return &service{storage: storage, logger: logger}
+func NewService(storage Storage, logger *logging.Logger, cache cache.Cache) *service {
+	return &service{storage: storage, logger: logger, cache: cache}
+}
+func (s *service) SendEmailConfirmation(ctx context.Context, userId string) error {
+	u, err := s.storage.FindById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if u.EmailConfirmed {
+		return errormiddleware.BadRequestError([]string{"user's email already confirmed"}, "can't send message to already confirmed email")
+	}
+	if _, err := s.cache.Get([]byte(fmt.Sprintf("cd%s", userId))); err == nil {
+		return errormiddleware.ForbiddenError([]string{"message resending cooldown still not expired"}, "can't send message now because of cooldown")
+	}
+	code := primitive.NewObjectID().Hex()
+	ok := email.SendEmailConfirmationMessage(u.Email, u.Login, code)
+	if !ok {
+		return fmt.Errorf("can't send email message")
+	}
+	err = s.cache.Set([]byte(fmt.Sprintf("cd%s", userId)), []byte("cooldown"), int(time.Minute/time.Second))
+	if err != nil {
+		return err
+	}
+
+	err = s.cache.Set([]byte(fmt.Sprintf("code%s", userId)), []byte(code), int((10*time.Minute)/time.Second))
+	if err != nil {
+		return err
+	}
+	s.logger.Infof("email confirmation cached. now there are %d entries in cache", s.cache.EntryCount())
+	return nil
+}
+func (s *service) ValidateEmailConfirmationCode(ctx context.Context, userId string, code string) error {
+	cached_code, err := s.cache.Get([]byte(fmt.Sprintf("code%s", userId)))
+	if err != nil {
+		return errormiddleware.ValidationErrorByString([]string{"user has no stored code or code is expired"}, "can't find cached code by user's email")
+	}
+	if string(cached_code) != code {
+		return errormiddleware.ValidationErrorByString([]string{"code is incorrect"}, "code has found in cache, but provided code is incorrect. maybe the wrong link")
+	}
+	s.cache.Delete([]byte(fmt.Sprintf("cd%s", userId)))
+	s.cache.Delete([]byte(fmt.Sprintf("code%s", userId)))
+
+	err = s.storage.ApproveUserEmail(ctx, userId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (s *service) SignInUser(ctx context.Context, model *AuthUserByLoginAndPassword) (*User, error) {
 	u, err := s.storage.FindByLogin(ctx, model.Login)

@@ -14,12 +14,6 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 
-type key int
-
-const (
-	UserClaimKey key = iota
-)
-
 type UserClaims struct {
 	jwt.RegisteredClaims
 	Login string   `json:"login"`
@@ -55,7 +49,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 		if ok {
 			return nil, errormiddleware.ValidationError(tp, "wrong refresh token format")
 		} else {
-			return nil, errormiddleware.NotFoundError("wrong refresh token format", []string{err.Error()})
+			return nil, errormiddleware.NotFoundError([]string{"wrong refresh token format"}, err.Error())
 		}
 	}
 	defer j.Cache.Delete([]byte(rt.RefreshToken))
@@ -63,7 +57,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	userBytes, err := j.Cache.Get([]byte(rt.RefreshToken))
 	if err != nil {
 		j.Logger.Warn(err)
-		return nil, errormiddleware.NotFoundError("couldn't get refresh token from cache", []string{err.Error()})
+		return nil, errormiddleware.NotFoundError([]string{"couldn't get refresh token from cache"}, err.Error())
 	}
 	var u user.User
 	err = json.Unmarshal(userBytes, &u)
@@ -101,7 +95,7 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 	j.Logger.Info("creating refresh token...")
 	refreshTokenUuid := uuid.New()
 	userBytes, _ := json.Marshal(u)
-	err = j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int(7*24*time.Hour))
+	err = j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int((7*24*time.Hour)/time.Second))
 	if err != nil {
 		j.Logger.Warn(err)
 		return nil, err

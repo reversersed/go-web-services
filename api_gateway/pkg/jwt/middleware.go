@@ -13,6 +13,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/rest"
 )
 
 func Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
@@ -21,8 +22,7 @@ func Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 		header := strings.Split(r.Header.Get("Authorization"), "Bearer ")
 		if len(header) != 2 {
 			logger.Warnf("Wrong provided token: %s", r.Header.Get("Authorization"))
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Wrong token form provided"))
+			unauthorized(w, fmt.Errorf("wrong token form provided"))
 			return
 		}
 		headertoken := header[1]
@@ -60,7 +60,7 @@ func Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 				return
 			}
 		}
-		ctx := context.WithValue(r.Context(), UserClaimKey, claims.ID)
+		ctx := context.WithValue(r.Context(), rest.UserIdKey, claims.ID)
 		h(w, r.WithContext(ctx))
 	}
 }

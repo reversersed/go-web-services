@@ -6,12 +6,12 @@ definitions:
     properties:
       code:
         type: string
-      dev_messages:
+      dev_message:
+        type: string
+      messages:
         items:
           type: string
         type: array
-      message:
-        type: string
     type: object
   jwt.JwtResponse:
     properties:
@@ -71,6 +71,56 @@ info:
   title: API
   version: "1.0"
 paths:
+  /users/email:
+    get:
+      description: |-
+        If code field is empty: send or resend confirmation message to user's email
+        Message can be resended every 1 minutes
+        If code field is not empty: validate code and approve email, code is expired within 10 minutes
+      parameters:
+      - description: Confirmation code
+        in: query
+        name: code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response. Confirmation code was sent
+        "204":
+          description: Successful response. Email was confirmed
+        "400":
+          description: Return's if user's email already confirmed
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "401":
+          description: Return's if service can't authorize user
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "403":
+          description: Return's if email can't be resend now (cooldown still active)
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Return's if user is authorized, but service can't identity
+            him
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Returns when provided confirmation code is incorrect or code
+            is expired
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Confirm user's email
+      tags:
+      - users
   /users/login:
     post:
       description: |-

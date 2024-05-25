@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
+	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,6 +54,26 @@ func (d *db) seedAdminAccount() {
 		return
 	}
 	d.logger.Info("admin account exists. seed not executed")
+}
+func (d *db) ApproveUserEmail(ctx context.Context, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	obj_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	result, err := d.collection.UpdateByID(ctx, obj_id, bson.M{"$set": bson.M{"emailconfirmed": true}})
+	if err != nil {
+		return err
+	}
+	if result.ModifiedCount == 0 {
+		if result.MatchedCount == 0 {
+			return errormiddleware.NotFoundError([]string{"user does not exists"}, "database returned no matching for provided id")
+		}
+		return errormiddleware.NotFoundError([]string{"user's email already approved"}, "database found user, but didn't update it")
+	}
+	return nil
 }
 func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error) {
 	filter := bson.M{"login": login}
@@ -105,7 +126,11 @@ func (d *db) AddUser(ctx context.Context, user *client.User) (string, error) {
 	return "", fmt.Errorf("cant resolve user id")
 }
 func (d *db) FindById(ctx context.Context, id string) (*client.User, error) {
-	filter := bson.M{"_id": id}
+	primitive_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": primitive_id}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

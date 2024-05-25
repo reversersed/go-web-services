@@ -32,6 +32,40 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 		},
 	}
 }
+func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, error) {
+	c.base.Logger.Info("building request url...")
+	var uri string
+	var err error
+	if len(code) > 0 {
+		filter := []rest.FilterOptions{
+			{
+				Field:  "code",
+				Values: []string{code},
+			},
+		}
+		uri, err = c.base.BuildURL(c.Path+"/email", filter)
+	} else {
+		uri, err = c.base.BuildURL(c.Path+"/email", nil)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to build url: %v", err)
+	}
+	reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, uri, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed while request creation: %v", err)
+	}
+	response, err := c.base.SendRequest(req)
+	if err != nil {
+		return 0, err
+	}
+	if response.Valid {
+		return response.StatusCode(), nil
+	}
+	return 0, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
+}
 func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuery) (*User, error) {
 	c.base.Logger.Info("building request url...")
 	uri, err := c.base.BuildURL(c.Path+"/auth", nil)
@@ -52,8 +86,7 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	req = req.WithContext(reqCtx)
-	response, err := c.base.SendRequest(req)
+	response, err := c.base.SendRequest(req.WithContext(reqCtx))
 	if err != nil {
 		return nil, err
 	}

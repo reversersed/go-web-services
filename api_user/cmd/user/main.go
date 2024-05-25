@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -15,7 +16,9 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client/db"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/handlers/user"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/mongo"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/shutdown"
 )
 
@@ -29,15 +32,19 @@ func main() {
 	logger.Info("router initializing...")
 	router := httprouter.New()
 
+	logger.Info("cache initializing...")
+	cache := freecache.NewCache(104857600) // 100 mb
+	debug.SetGCPercent(40)
+
 	logger.Info("database initializing...")
-	db_client, err := db.NewClient(context.Background(), config)
+	db_client, err := mongo.NewClient(context.Background(), config)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	logger.Info("services initializing...")
 	user_storage := db.NewStorage(db_client, config.Db_Base, logger)
-	user_service := client.NewService(user_storage, logger)
+	user_service := client.NewService(user_storage, logger, cache)
 	userHandler := user.Handler{Logger: logger, UserService: user_service}
 	userHandler.Register(router)
 

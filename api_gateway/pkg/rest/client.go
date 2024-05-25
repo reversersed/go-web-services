@@ -11,6 +11,12 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 
+type key string
+
+const (
+	UserIdKey key = "user_id"
+)
+
 type RestClient struct {
 	BaseURL    string
 	HttpClient *http.Client
@@ -21,12 +27,19 @@ func (c *RestClient) SendRequest(r *http.Request) (*CustomResponse, error) {
 	if c.HttpClient == nil {
 		return nil, errors.New("no http client registered")
 	}
-	r.Header.Set("Accept", "application/json; charset=utf-8")
+	r.Header.Set("Accept", "*/*")
 	r.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	c.Logger.Infof("sending requiest to %s", r.URL)
+	//reading userid from context and adding it to header
+	userId, valid := r.Context().Value(UserIdKey).(string)
+	if valid && len(userId) > 0 {
+		r.Header.Add("User", userId)
+	}
+
 	response, err := c.HttpClient.Do(r)
 	if err != nil {
+		c.Logger.Errorf("error while sending rest request: %s", err)
 		return nil, err
 	}
 

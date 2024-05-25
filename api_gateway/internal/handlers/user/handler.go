@@ -3,26 +3,29 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/jwt"
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
 
 const (
-	url_auth     = "/api/v1/users/login"
-	url_refresh  = "/api/v1/users/refresh"
-	url_register = "/api/v1/users/register"
+	url_auth          = "/api/v1/users/login"
+	url_refresh       = "/api/v1/users/refresh"
+	url_register      = "/api/v1/users/register"
+	url_confirm_email = "/api/v1/users/email"
 )
 
 type UserService interface {
 	AuthByLoginAndPassword(ctx context.Context, query *model.UserAuthQuery) (*model.User, error)
 	RegisterUser(ctx context.Context, query *model.UserRegisterQuery) (*model.User, error)
+	UserEmailConfirmation(ctx context.Context, code string) (int, error)
 }
 
 type Handler struct {
@@ -35,7 +38,38 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, mw.Middleware(h.Authenticate))
 	router.HandlerFunc(http.MethodPost, url_refresh, mw.Middleware(h.UpdateToken))
 	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
+	router.HandlerFunc(http.MethodGet, url_confirm_email, jwt.Middleware(mw.Middleware(h.EmailConfirmation)))
 	h.Logger.Info("auth service registered")
+}
+
+// @Summary Confirm user's email
+// @Description If code field is empty: send or resend confirmation message to user's email
+// @Description Message can be resended every 1 minutes
+// @Description If code field is not empty: validate code and approve email, code is expired within 10 minutes
+// @Tags users
+// @Produce json
+// @Param code query string false "Confirmation code"
+// @Success 200 "Successful response. Confirmation code was sent"
+// @Success 204 "Successful response. Email was confirmed"
+// @Failure 400 {object} errormiddleware.Error "Return's if user's email already confirmed"
+// @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user"
+// @Failure 403 {object} errormiddleware.Error "Return's if email can't be resend now (cooldown still active)"
+// @Failure 404 {object} errormiddleware.Error "Return's if user is authorized, but service can't identity him"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
+// @Failure 501 {object} errormiddleware.Error "Returns when provided confirmation code is incorrect or code is expired"
+// @Security ApiKeyAuth
+// @Router /users/email [get]
+func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) error {
+	responseCode, err := h.UserService.UserEmailConfirmation(r.Context(), r.URL.Query().Get("code"))
+	if err != nil {
+		return err
+	}
+	if responseCode != 200 && responseCode != 204 {
+		h.Logger.Errorf("user service returned invalid status code (%d) for email confirmation request", responseCode)
+		return fmt.Errorf("service responded with invalid status code: %d", responseCode)
+	}
+	w.WriteHeader(responseCode)
+	return nil
 }
 
 // @Summary Generate new token

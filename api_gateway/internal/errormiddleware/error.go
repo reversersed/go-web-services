@@ -9,12 +9,12 @@ import (
 )
 
 type Error struct {
-	Message          string   `json:"message,omitempty"`
-	DeveloperMessage []string `json:"dev_messages,omitempty"`
+	Message          []string `json:"messages,omitempty"`
+	DeveloperMessage string   `json:"dev_message,omitempty"`
 	Code             string   `json:"code,omitempty"`
 }
 
-func NewError(message, code string, dev_message []string) *Error {
+func NewError(message []string, code, dev_message string) *Error {
 	return &Error{
 		Code:             code,
 		Message:          message,
@@ -23,9 +23,9 @@ func NewError(message, code string, dev_message []string) *Error {
 }
 
 func (e *Error) Error() string {
-	return strings.Join(e.DeveloperMessage, ", ")
+	return strings.Join(e.Message, ", ")
 }
-func (e *Error) Unwrap() error { return fmt.Errorf(strings.Join(e.DeveloperMessage, ", ")) }
+func (e *Error) Unwrap() error { return fmt.Errorf(strings.Join(e.Message, ", ")) }
 
 func (e *Error) Marshall() []byte {
 	bytes, err := json.Marshal(e)
@@ -34,31 +34,31 @@ func (e *Error) Marshall() []byte {
 	}
 	return bytes
 }
-func sysError(dev_message []string) *Error {
-	return NewError("Something wrong happened", "IE-0001", dev_message)
+func sysError(message []string) *Error {
+	return NewError(message, "IE-0001", "Something wrong happened while service executing")
 }
-func NotFoundError(message string, dev_message []string) *Error {
+func NotFoundError(message []string, dev_message string) *Error {
 	return NewError(message, "IE-0002", dev_message)
 }
-func BadRequestError(message string, dev_message []string) *Error {
+func BadRequestError(message []string, dev_message string) *Error {
 	return NewError(message, "IE-0003", dev_message)
 }
-func ValidationError(errors validator.ValidationErrors, message string) *Error {
+func ValidationError(errors validator.ValidationErrors, dev_message string) *Error {
 	var errs []string
 	for _, err := range errors {
 		errs = append(errs, err.Error())
 	}
-	return NewError(message, "IE-0004", errs)
+	return NewError(errs, "IE-0004", dev_message)
 }
-func ValidationErrorByString(errors []string, message string) *Error {
-	return NewError(message, "IE-0004", errors)
+func ValidationErrorByString(errors []string, dev_message string) *Error {
+	return NewError(errors, "IE-0004", dev_message)
 }
-func UnauthorizedError(errors []string, message string) *Error {
-	return NewError(message, "IE-0005", errors)
+func UnauthorizedError(errors []string, dev_message string) *Error {
+	return NewError(errors, "IE-0005", dev_message)
 }
-func NotUniqueError(errors []string, message string) *Error {
-	return NewError(message, "IE-0006", errors)
+func NotUniqueError(errors []string, dev_message string) *Error {
+	return NewError(errors, "IE-0006", dev_message)
 }
-func ForbiddenError(errors []string, message string) *Error {
-	return NewError(message, "IE-0007", errors)
+func ForbiddenError(errors []string, dev_message string) *Error {
+	return NewError(errors, "IE-0007", dev_message)
 }
