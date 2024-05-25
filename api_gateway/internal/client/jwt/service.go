@@ -85,7 +85,7 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        u.Id,
-			Audience:  []string{"users"},
+			Audience:  u.Roles,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
 		},
 		Roles: u.Roles,
