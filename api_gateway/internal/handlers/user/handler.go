@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
-	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
+	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
+	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
 const (
@@ -20,18 +20,21 @@ const (
 	url_refresh       = "/api/v1/users/refresh"
 	url_register      = "/api/v1/users/register"
 	url_confirm_email = "/api/v1/users/email"
+	url_find_user     = "/api/v1/users"
 )
 
 type UserService interface {
 	AuthByLoginAndPassword(ctx context.Context, query *model.UserAuthQuery) (*model.User, error)
 	RegisterUser(ctx context.Context, query *model.UserRegisterQuery) (*model.User, error)
 	UserEmailConfirmation(ctx context.Context, code string) (int, error)
+	FindUser(ctx context.Context, userid string, login string) (*model.User, error)
 }
 
 type Handler struct {
 	Logger      *logging.Logger
 	JwtService  jwt.JwtService
 	UserService UserService
+	Validator   *valid.Validator
 }
 
 func (h *Handler) Register(router *httprouter.Router) {
@@ -39,6 +42,7 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_refresh, mw.Middleware(h.UpdateToken))
 	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
 	router.HandlerFunc(http.MethodGet, url_confirm_email, jwt.Middleware(mw.Middleware(h.EmailConfirmation)))
+	router.HandlerFunc(http.MethodGet, url_find_user, mw.Middleware(h.FindUser))
 	h.Logger.Info("auth service registered")
 }
 
@@ -91,7 +95,7 @@ func (h *Handler) UpdateToken(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		return err
 	}
-	if err := validator.New().Struct(query); err != nil {
+	if err := h.Validator.Struct(query); err != nil {
 		return mw.ValidationError(err.(validator.ValidationErrors), "wrong token format")
 	}
 	token, err := h.JwtService.UpdateRefreshToken(&query)
@@ -104,6 +108,35 @@ func (h *Handler) UpdateToken(w http.ResponseWriter, r *http.Request) error {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
+	return nil
+}
+
+// @Summary Finds user by id or login
+// @Description Get user using Id or login, both params are optional, but one of them is necessary
+// @Produce json
+// @Tags users
+// @Param id query string false "User id"
+// @Param login query string false "User login"
+// @Success 200 {object} model.User "Successful response"
+// @Failure 400 {object} errormiddleware.Error "Returns when service didn't get a parameters"
+// @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
+// @Router /users [get]
+func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
+	user_id := r.URL.Query().Get("id")
+	user_login := r.URL.Query().Get("login")
+	u, err := h.UserService.FindUser(r.Context(), user_id, user_login)
+	if err != nil {
+		return err
+	}
+	bytes, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(bytes)
 	return nil
 }
 
@@ -127,7 +160,7 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		return err
 	}
-	if err := validator.New().Struct(query); err != nil {
+	if err := h.Validator.Struct(query); err != nil {
 		return mw.ValidationError(err.(validator.ValidationErrors), "wrong query format")
 	}
 	model, err := h.UserService.AuthByLoginAndPassword(r.Context(), &query)
@@ -164,12 +197,8 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		return err
 	}
-	if err := validator.New().Struct(query); err != nil {
+	if err := h.Validator.Struct(query); err != nil {
 		return mw.ValidationError(err.(validator.ValidationErrors), "wrong query format")
-	}
-	errs := h.passwordValidation(query.Password)
-	if errs != nil {
-		return mw.ValidationErrorByString(errs, "wrong password format")
 	}
 	model, err := h.UserService.RegisterUser(r.Context(), &query)
 	if err != nil {
@@ -184,50 +213,5 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) error {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
-	return nil
-}
-func (h *Handler) passwordValidation(password string) []string {
-	var errors []string
-
-	//lowercase character
-	mathed, err := regexp.MatchString("[a-z]+", password)
-	if err != nil {
-		h.Logger.Errorf("cant check user password: %v", err)
-		return []string{"internal error. check logs"}
-	}
-	if !mathed {
-		errors = append(errors, "password must contain at least one lowercase letter")
-	}
-	//uppercase character
-	mathed, err = regexp.MatchString("[A-Z]+", password)
-	if err != nil {
-		h.Logger.Errorf("cant check user password: %v", err)
-		return []string{"internal error. check logs"}
-	}
-	if !mathed {
-		errors = append(errors, "password must contain at least one uppercase letter")
-	}
-	//one digit
-	mathed, err = regexp.MatchString("[0-9]+", password)
-	if err != nil {
-		h.Logger.Errorf("cant check user password: %v", err)
-		return []string{"internal error. check logs"}
-	}
-	if !mathed {
-		errors = append(errors, "password must contain at least one digit")
-	}
-	//special symbol
-	mathed, err = regexp.MatchString("[!@#\\$%\\^&*()_\\+-.,]+", password)
-	if err != nil {
-		h.Logger.Errorf("cant check user password: %v", err)
-		return []string{"internal error. check logs"}
-	}
-	if !mathed {
-		errors = append(errors, "password must contain at least one special character")
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
 	return nil
 }

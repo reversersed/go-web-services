@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

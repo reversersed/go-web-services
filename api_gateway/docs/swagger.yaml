@@ -33,6 +33,21 @@ definitions:
     required:
     - refreshtoken
     type: object
+  user.User:
+    properties:
+      email:
+        type: string
+      emailconfirmed:
+        type: boolean
+      id:
+        type: string
+      login:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+    type: object
   user.UserAuthQuery:
     properties:
       login:
@@ -71,6 +86,42 @@ info:
   title: API
   version: "1.0"
 paths:
+  /users:
+    get:
+      description: Get user using Id or login, both params are optional, but one of
+        them is necessary
+      parameters:
+      - description: User id
+        in: query
+        name: id
+        type: string
+      - description: User login
+        in: query
+        name: login
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Returns when service didn't get a parameters
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Returns when service can't find user by provided credentials
+            (user not found)
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Finds user by id or login
+      tags:
+      - users
   /users/email:
     get:
       description: |-

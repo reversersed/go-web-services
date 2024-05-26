@@ -46,7 +46,30 @@ func BadRequestError(message []string, dev_message string) *Error {
 func ValidationError(errors validator.ValidationErrors, dev_message string) *Error {
 	var errs []string
 	for _, err := range errors {
-		errs = append(errs, err.Error())
+		switch err.Tag() {
+		case "required":
+			errs = append(errs, fmt.Sprintf("%s: field is required", err.Field()))
+		case "oneof":
+			errs = append(errs, fmt.Sprintf("%s: field can only be: %s", err.Field(), err.Param()))
+		case "min":
+			errs = append(errs, fmt.Sprintf("%s must be at least %s characters length", err.Field(), err.Param()))
+		case "max":
+			errs = append(errs, fmt.Sprintf("%s can't be more that %s characters length", err.Field(), err.Param()))
+		case "email":
+			errs = append(errs, fmt.Sprintf("%s must be a valid email", err.Field()))
+		case "jwt":
+			errs = append(errs, fmt.Sprintf("%s must be a JWT token", err.Field()))
+		case "lowercase":
+			errs = append(errs, fmt.Sprintf("%s must contain at least one lowercase character", err.Field()))
+		case "uppercase":
+			errs = append(errs, fmt.Sprintf("%s must contain at least one uppercase character", err.Field()))
+		case "digitrequired":
+			errs = append(errs, fmt.Sprintf("%s must contain at least one digit", err.Field()))
+		case "specialsymbol":
+			errs = append(errs, fmt.Sprintf("%s must contain at least one special symbol", err.Field()))
+		default:
+			errs = append(errs, err.Error())
+		}
 	}
 	return NewError(errs, "IE-0004", dev_message)
 }

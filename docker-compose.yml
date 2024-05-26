@@ -40,3 +40,15 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - api_gateway
+
+  api_notification:
+    image: api_notification
+    volumes:
+      - ./api_notification/logs:/logs
+      - ./api_notification/config:/config
+    user: root
+    build:
+      context: ./api_notification
+      dockerfile: ./Dockerfile
+    depends_on:
+      - api_gateway

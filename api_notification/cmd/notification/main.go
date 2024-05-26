@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client/db"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/config"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/handlers/user"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache/freecache"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/mongo"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/shutdown"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/client"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/client/db"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/config"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/handlers/notification"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/cache/freecache"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/logging"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/mongo"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/shutdown"
 )
 
 func main() {
@@ -43,12 +43,12 @@ func main() {
 	}
 
 	logger.Info("services initializing...")
-	user_storage := db.NewStorage(db_client, config.Db_Base, logger)
-	user_service := client.NewService(user_storage, logger, cache)
+	storage := db.NewStorage(db_client, config.Db_Base, logger)
+	service := client.NewService(storage, logger, cache)
 
 	logger.Info("handlers registration...")
-	userHandler := user.Handler{Logger: logger, UserService: user_service}
-	userHandler.Register(router)
+	handler := notification.Handler{Service: service, Logger: logger}
+	handler.Register(router)
 
 	logger.Info("starting application...")
 	start(router, logger, config)

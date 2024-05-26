@@ -1,7 +1,9 @@
 api_gateway/logs
 api_user/logs
+api_notification/logs
 api_gateway/config
 api_user/config
+api_notification/config
 data/
 docgen.bat
 start.bat

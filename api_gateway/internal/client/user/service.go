@@ -10,7 +10,7 @@ import (
 
 	"github.com/fatih/structs"
 
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/rest"
 )
@@ -31,6 +31,51 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 			Logger: logger,
 		},
 	}
+}
+func (c *client) FindUser(ctx context.Context, userid string, login string) (*User, error) {
+	var filter []rest.FilterOptions
+	if len(userid) > 0 {
+		filter = []rest.FilterOptions{
+			{
+				Field:  "id",
+				Values: []string{userid},
+			},
+		}
+	} else if len(login) > 0 {
+		filter = []rest.FilterOptions{
+			{
+				Field:  "login",
+				Values: []string{login},
+			},
+		}
+	} else {
+		return nil, errormiddleware.BadRequestError([]string{"query has to have one of parameters", "login: user login", "id: user id"}, "bad request provided")
+	}
+
+	uri, err := c.base.BuildURL(c.Path, filter)
+	if err != nil {
+		return nil, err
+	}
+	reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed while request creation: %v", err)
+	}
+	response, err := c.base.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	if response.Valid {
+		defer response.Body().Close()
+		var u User
+		if err = json.NewDecoder(response.Body()).Decode(&u); err != nil {
+			return nil, fmt.Errorf("failed to unmarshall response body: %v", err)
+		}
+		return &u, nil
+	}
+	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, error) {
 	c.base.Logger.Info("building request url...")
@@ -92,6 +137,7 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	}
 	if response.Valid {
 		var u User
+		defer response.Body().Close()
 		if err = json.NewDecoder(response.Body()).Decode(&u); err != nil {
 			return nil, fmt.Errorf("failed to unmarshall response body: %v", err)
 		}
@@ -126,6 +172,7 @@ func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*U
 	}
 	if response.Valid {
 		var u User
+		defer response.Body().Close()
 		if err = json.NewDecoder(response.Body()).Decode(&u); err != nil {
 			return nil, fmt.Errorf("failed to unmarshall response body: %v", err)
 		}

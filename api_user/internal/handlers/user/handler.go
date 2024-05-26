@@ -7,7 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 )
 
@@ -15,6 +15,7 @@ const (
 	url_auth              = "/users/auth"
 	url_register          = "/users/register"
 	url_email_confirmaton = "/users/email"
+	url_user_find         = "/users"
 )
 
 type Service interface {
@@ -22,6 +23,8 @@ type Service interface {
 	RegisterUser(ctx context.Context, query *client.RegisterUserQuery) (*client.User, error)
 	SendEmailConfirmation(ctx context.Context, userId string) error
 	ValidateEmailConfirmationCode(ctx context.Context, userId string, code string) error
+	GetUserById(ctx context.Context, userId string) (*client.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*client.User, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -32,6 +35,44 @@ func (h *Handler) Register(route *httprouter.Router) {
 	route.HandlerFunc(http.MethodPost, url_auth, errormiddleware.Middleware(h.AuthUser))
 	route.HandlerFunc(http.MethodPost, url_register, errormiddleware.Middleware(h.RegUser))
 	route.HandlerFunc(http.MethodGet, url_email_confirmaton, errormiddleware.Middleware(h.ConfirmEmail))
+	route.HandlerFunc(http.MethodGet, url_user_find, errormiddleware.Middleware(h.FindUser))
+}
+func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
+	user_principal := r.URL.Query().Get("id")
+
+	if len(user_principal) > 0 {
+		u, err := h.UserService.GetUserById(r.Context(), user_principal)
+		if err != nil {
+			return err
+		}
+		bytes, err := json.Marshal(u)
+		if err != nil {
+			return err
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(bytes)
+		return nil
+	}
+	user_principal = r.URL.Query().Get("login")
+
+	if len(user_principal) > 0 {
+		u, err := h.UserService.GetUserByLogin(r.Context(), user_principal)
+		if err != nil {
+			return err
+		}
+		bytes, err := json.Marshal(u)
+		if err != nil {
+			return err
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(bytes)
+		return nil
+	}
+	return errormiddleware.BadRequestError([]string{"query has to have one of parameters", "login: user login", "id: user id"}, "bad request provided")
 }
 func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) error {
 	userId := r.Header.Get("User")

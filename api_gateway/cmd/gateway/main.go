@@ -18,6 +18,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/shutdown"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -46,14 +47,17 @@ func main() {
 	logger.Info("cache initializing...")
 	cache := freecache.NewCache(104857600) // 100 mb
 
+	logger.Info("validator initializing...")
+	validator := validator.New()
+
 	logger.Info("services initializing....")
-	jwtService := jwt.NewService(cache, logger)
+	jwtService := jwt.NewService(cache, logger, validator)
 
 	logger.Info("handlers registration...")
 	router.GET("/swagger/:any", swaggerHandler)
 
 	user_service := user.NewService(config.UserServiceURL, "/users", logger)
-	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService}
+	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService, Validator: validator}
 	user_handler.Register(router)
 
 	logger.Info("starting application...")

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/email"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache"
+	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -115,4 +115,24 @@ func (s *service) RegisterUser(ctx context.Context, model *RegisterUserQuery) (*
 		return nil, err
 	}
 	return &user, nil
+}
+func (s *service) GetUserById(ctx context.Context, userId string) (*User, error) {
+	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	u, err := s.storage.FindById(cntx, userId)
+	if err != nil {
+		return nil, errormiddleware.NotFoundError([]string{"user with provided id not found"}, err.Error())
+	}
+	return u, nil
+}
+func (s *service) GetUserByLogin(ctx context.Context, login string) (*User, error) {
+	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	u, err := s.storage.FindByLogin(cntx, login)
+	if err != nil {
+		return nil, errormiddleware.NotFoundError([]string{"user with provided login not found"}, err.Error())
+	}
+	return u, nil
 }

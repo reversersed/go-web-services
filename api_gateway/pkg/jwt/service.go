@@ -9,9 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
+	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
 type UserClaims struct {
@@ -26,8 +27,9 @@ type RefreshTokenQuery struct {
 }
 
 type jwtService struct {
-	Logger *logging.Logger
-	Cache  cache.Cache
+	Logger    *logging.Logger
+	Cache     cache.Cache
+	Validator *valid.Validator
 }
 type JwtResponse struct {
 	Login        string   `json:"login"`
@@ -40,11 +42,11 @@ type JwtService interface {
 	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
 }
 
-func NewService(cache cache.Cache, logger *logging.Logger) JwtService {
-	return &jwtService{Logger: logger, Cache: cache}
+func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator) JwtService {
+	return &jwtService{Logger: logger, Cache: cache, Validator: validate}
 }
 func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
-	if err := validator.New().Struct(rt); err != nil {
+	if err := j.Validator.Struct(rt); err != nil {
 		tp, ok := err.(validator.ValidationErrors)
 		if ok {
 			return nil, errormiddleware.ValidationError(tp, "wrong refresh token format")
