@@ -55,15 +55,20 @@ func main() {
 	rabbit := rabbitClient.New(config.Rabbit, logger)
 	notifReceiver := receivers.NewNotificationReceiver(rabbit.Connection, validator, logger, service)
 	notifReceiver.Start()
+	userDeletedReceiver := receivers.NewUserDeletedReceiver(rabbit.Connection, validator, logger, service)
+	userDeletedReceiver.Start()
+	userLoginChangedReceiver := receivers.NewUserLoginChangedReceiver(rabbit.Connection, validator, logger, service)
+	userLoginChangedReceiver.Start()
 
 	logger.Info("handlers registration...")
 	handler := notification.Handler{Service: service, Logger: logger, Validator: validator}
 	handler.Register(router)
 
 	logger.Info("starting application...")
-	start(router, logger, config, rabbit, notifReceiver)
+	start(router, logger, config, rabbit, notifReceiver, userDeletedReceiver, userLoginChangedReceiver)
 }
-func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config, rabbit *rabbitClient.RabbitClient, rabbitChannel rabbitmq.Receiver) {
+func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config, rabbit *rabbitClient.RabbitClient,
+	notificationReceiver, userDeletedReceiver, userLoginChangedReceiver rabbitmq.Receiver) {
 	var server *http.Server
 	var listener net.Listener
 
@@ -83,7 +88,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	}
 
 	go shutdown.Graceful([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
-		server, rabbit, rabbitChannel)
+		server, rabbit, notificationReceiver, userDeletedReceiver, userLoginChangedReceiver)
 
 	logger.Info("application initialized and started")
 

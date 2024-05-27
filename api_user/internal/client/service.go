@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/email"
+	"github.com/reversersed/go-web-services/tree/main/api_user/internal/rabbitmq"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
@@ -14,13 +15,14 @@ import (
 )
 
 type service struct {
-	storage Storage
-	logger  *logging.Logger
-	cache   cache.Cache
+	storage      Storage
+	logger       *logging.Logger
+	cache        cache.Cache
+	rabbitSender *rabbitmq.Sender
 }
 
-func NewService(storage Storage, logger *logging.Logger, cache cache.Cache) *service {
-	return &service{storage: storage, logger: logger, cache: cache}
+func NewService(storage Storage, logger *logging.Logger, cache cache.Cache, rabbitSender *rabbitmq.Sender) *service {
+	return &service{storage: storage, logger: logger, cache: cache, rabbitSender: rabbitSender}
 }
 func (s *service) SendEmailConfirmation(ctx context.Context, userId string) error {
 	u, err := s.storage.FindById(ctx, userId)

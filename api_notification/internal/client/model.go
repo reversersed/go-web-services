@@ -26,3 +26,7 @@ type SendNotificationMessage struct {
 	Content string           `json:"content" validate:"required"`
 	Type    NotificationType `json:"type" validate:"required,oneof=info warn security"`
 }
+type UserLoginChangedMessage struct {
+	UserId   string `json:"userid" validate:"required,primitiveid"`
+	NewLogin string `json:"newlogin" validate:"required"`
+}

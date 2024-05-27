@@ -25,10 +25,17 @@ type SmtpConfig struct {
 	SmtpLogin    string `env:"SMTP_LOGIN"`
 	SmtpPassword string `env:"SMTP_PASS"`
 }
+type RabbitConfig struct {
+	Rabbit_Host string `env:"RABBITMQ_HOST" env-required:"true"`
+	Rabbit_Port string `env:"RABBITMQ_PORT" env-required:"true"`
+	Rabbit_User string `env:"RABBITMQ_USER" env-required:"true"`
+	Rabbit_Pass string `env:"RABBITMQ_PASS" env-required:"true"`
+}
 type Config struct {
 	Server   *ServerConfig
 	Database *DatabaseConfig
 	SMTP     *SmtpConfig
+	Rabbit   *RabbitConfig
 }
 
 var cfg *Config
@@ -41,6 +48,7 @@ func GetConfig() *Config {
 		srvCfg := &ServerConfig{}
 		dbCfg := &DatabaseConfig{}
 		smtpCfg := &SmtpConfig{}
+		rabbitCfg := &RabbitConfig{}
 
 		if err := cleanenv.ReadConfig("config/.env", srvCfg); err != nil {
 			desc, _ := cleanenv.GetDescription(cfg, nil)
@@ -57,10 +65,16 @@ func GetConfig() *Config {
 			logger.Error(desc)
 			logger.Fatal(err)
 		}
+		if err := cleanenv.ReadConfig("config/.env", rabbitCfg); err != nil {
+			desc, _ := cleanenv.GetDescription(cfg, nil)
+			logger.Error(desc)
+			logger.Fatal(err)
+		}
 		cfg = &Config{
 			Server:   srvCfg,
 			Database: dbCfg,
 			SMTP:     smtpCfg,
+			Rabbit:   rabbitCfg,
 		}
 	})
 	return cfg

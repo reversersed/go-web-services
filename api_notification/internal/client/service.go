@@ -94,3 +94,28 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 	}
 	s.logger.Infof("Notification %s sended to user %s (Content: %s)", query.Type, query.UserId, query.Content)
 }
+func (s *service) OnUserDeleted(ctx context.Context, userid string) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	err := s.storage.DeleteUser(ctx, userid)
+	if err != nil {
+		s.logger.Error(err)
+		return
+	}
+}
+func (s *service) OnUserLoginChanged(ctx context.Context, query *UserLoginChangedMessage) {
+	if err := s.validator.Struct(query); err != nil {
+		s.logger.Errorf("received wrong user login changed query: %v", errormiddleware.ValidationError(err.(validator.ValidationErrors), "").Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	err := s.storage.ChangeUserLogin(ctx, query.UserId, query.NewLogin)
+	if err != nil {
+		s.logger.Error(err)
+		return
+	}
+}

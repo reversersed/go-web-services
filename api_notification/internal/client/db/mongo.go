@@ -14,7 +14,7 @@ import (
 )
 
 type db struct {
-	*sync.Mutex
+	sync.Mutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
@@ -79,12 +79,45 @@ func (d *db) SendNotification(ctx context.Context, notif *client.Notification, u
 
 	u.Notifications = append([]*client.Notification{notif}, u.Notifications...)
 
-	upd_result, err := d.collection.UpdateByID(ctx, id, u)
+	upd_result, err := d.collection.UpdateByID(ctx, id, bson.M{"$set": bson.M{"notifications": u.Notifications}})
 	if err != nil {
 		return err
 	}
 	if upd_result.MatchedCount == 0 || upd_result.ModifiedCount == 0 {
 		return fmt.Errorf("user has not been updated")
 	}
+	return nil
+}
+func (d *db) DeleteUser(ctx context.Context, user_id string) error {
+	d.Lock()
+	defer d.Unlock()
+
+	id, err := primitive.ObjectIDFromHex(user_id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"id": id}
+	result, err := d.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	d.logger.Warnf("deleted %d users with id %s", result.DeletedCount, user_id)
+	return nil
+}
+func (d *db) ChangeUserLogin(ctx context.Context, user_id string, newLogin string) error {
+	d.Lock()
+	defer d.Unlock()
+
+	id, err := primitive.ObjectIDFromHex(user_id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"id": id}
+	_, err = d.collection.UpdateOne(ctx, filter, bson.M{"$set": bson.M{"login": newLogin}})
+	if err != nil {
+		return err
+	}
+	d.logger.Infof("user's login changed to %s (%s)", newLogin, user_id)
 	return nil
 }
