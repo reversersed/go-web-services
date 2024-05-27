@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func NewClient(ctx context.Context, cfg *config.Config) (*mongo.Database, error) {
+func NewClient(ctx context.Context, cfg *config.DbConfig) (*mongo.Database, error) {
 	var mongoURL string
 	var anonymous bool
 

@@ -26,7 +26,7 @@ func Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 			return
 		}
 		headertoken := header[1]
-		key := []byte(config.GetConfig().SecretToken)
+		key := []byte(config.GetConfig().Jwt.SecretToken)
 		verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
 		if err != nil {
 			unauthorized(w, err)

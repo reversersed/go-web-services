@@ -70,7 +70,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	return j.GenerateAccessToken(&u)
 }
 func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
-	key := []byte(config.GetConfig().SecretToken)
+	key := []byte(config.GetConfig().Jwt.SecretToken)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {
 		j.Logger.Warn(err)

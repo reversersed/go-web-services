@@ -16,12 +16,13 @@ type Notification struct {
 	Type    NotificationType    `json:"type" bson:"type"`
 }
 type User struct {
-	Id            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Id            primitive.ObjectID `json:"id" bson:"id"`
 	Login         string             `json:"login" bson:"login"`
 	Notifications []*Notification    `json:"notifications" bson:"notifications"`
 }
 
-type SendNotificationQuery struct {
+type SendNotificationMessage struct {
+	UserId  string           `json:"userid" validate:"required,primitiveid"`
 	Content string           `json:"content" validate:"required"`
 	Type    NotificationType `json:"type" validate:"required,oneof=info warn security"`
 }

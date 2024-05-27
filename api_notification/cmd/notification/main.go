@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -16,10 +15,14 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/client/db"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/handlers/notification"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/rabbitmq"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/rabbitmq/receivers"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/mongo"
+	rabbitClient "github.com/reversersed/go-web-services/tree/main/api_notification/pkg/rabbitmq"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/shutdown"
+	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/validator"
 )
 
 func main() {
@@ -34,34 +37,41 @@ func main() {
 
 	logger.Info("cache initializing...")
 	cache := freecache.NewCache(104857600) // 100 mb
-	debug.SetGCPercent(40)
 
 	logger.Info("database initializing...")
-	db_client, err := mongo.NewClient(context.Background(), config)
+	db_client, err := mongo.NewClient(context.Background(), config.Database)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
+	logger.Info("validator initializing...")
+	validator := validator.New()
+
 	logger.Info("services initializing...")
-	storage := db.NewStorage(db_client, config.Db_Base, logger)
-	service := client.NewService(storage, logger, cache)
+	storage := db.NewStorage(db_client, config.Database.Db_Base, logger)
+	service := client.NewService(storage, logger, cache, validator)
+
+	logger.Info("rabbitmq initializing...")
+	rabbit := rabbitClient.New(config.Rabbit, logger)
+	notifReceiver := receivers.NewNotificationReceiver(rabbit.Connection, validator, logger, service)
+	notifReceiver.Start()
 
 	logger.Info("handlers registration...")
-	handler := notification.Handler{Service: service, Logger: logger}
+	handler := notification.Handler{Service: service, Logger: logger, Validator: validator}
 	handler.Register(router)
 
 	logger.Info("starting application...")
-	start(router, logger, config)
+	start(router, logger, config, rabbit, notifReceiver)
 }
-func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config) {
+func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config, rabbit *rabbitClient.RabbitClient, rabbitChannel rabbitmq.Receiver) {
 	var server *http.Server
 	var listener net.Listener
 
-	logger.Infof("bind application to host: %s and port: %d", cfg.ListenAddress, cfg.ListenPort)
+	logger.Infof("bind application to host: %s and port: %d", cfg.Server.ListenAddress, cfg.Server.ListenPort)
 
 	var err error
 
-	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort))
+	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.Server.ListenAddress, cfg.Server.ListenPort))
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -73,7 +83,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	}
 
 	go shutdown.Graceful([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
-		server)
+		server, rabbit, rabbitChannel)
 
 	logger.Info("application initialized and started")
 

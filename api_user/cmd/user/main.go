@@ -37,13 +37,13 @@ func main() {
 	debug.SetGCPercent(40)
 
 	logger.Info("database initializing...")
-	db_client, err := mongo.NewClient(context.Background(), config)
+	db_client, err := mongo.NewClient(context.Background(), config.Database)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	logger.Info("services initializing...")
-	user_storage := db.NewStorage(db_client, config.Db_Base, logger)
+	user_storage := db.NewStorage(db_client, config.Database.Db_Base, logger)
 	user_service := client.NewService(user_storage, logger, cache)
 
 	logger.Info("handlers registration...")
@@ -57,11 +57,11 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	var server *http.Server
 	var listener net.Listener
 
-	logger.Infof("bind application to host: %s and port: %d", cfg.ListenAddress, cfg.ListenPort)
+	logger.Infof("bind application to host: %s and port: %d", cfg.Server.ListenAddress, cfg.Server.ListenPort)
 
 	var err error
 
-	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort))
+	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.Server.ListenAddress, cfg.Server.ListenPort))
 	if err != nil {
 		logger.Fatal(err)
 	}

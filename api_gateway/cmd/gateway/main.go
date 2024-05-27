@@ -56,7 +56,7 @@ func main() {
 	logger.Info("handlers registration...")
 	router.GET("/swagger/:any", swaggerHandler)
 
-	user_service := user.NewService(config.UserServiceURL, "/users", logger)
+	user_service := user.NewService(config.Urls.UserServiceURL, "/users", logger)
 	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService, Validator: validator}
 	user_handler.Register(router)
 
@@ -70,11 +70,11 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	var server *http.Server
 	var listener net.Listener
 
-	logger.Infof("bind application to host: %s and port: %d", cfg.ListenAddress, cfg.ListenPort)
+	logger.Infof("bind application to host: %s and port: %d", cfg.Server.ListenAddress, cfg.Server.ListenPort)
 
 	var err error
 
-	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort))
+	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.Server.ListenAddress, cfg.Server.ListenPort))
 	if err != nil {
 		logger.Fatal(err)
 	}

@@ -22,7 +22,7 @@ var smtpConfig *smtpInfo
 var logger *logging.Logger
 
 func init() {
-	cfg := config.GetConfig()
+	cfg := config.GetConfig().SMTP
 	smtpConfig = &smtpInfo{
 		host:     cfg.SmtpHost,
 		password: cfg.SmtpPassword,

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/client"
@@ -13,6 +14,7 @@ import (
 )
 
 type db struct {
+	*sync.Mutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
@@ -24,12 +26,32 @@ func NewStorage(storage *mongo.Database, collection string, logger *logging.Logg
 	}
 	return db
 }
+func (d *db) CreateUser(ctx context.Context, user_id, login string) error {
+	d.Lock()
+	defer d.Unlock()
+	id, err := primitive.ObjectIDFromHex(user_id)
+	if err != nil {
+		return err
+	}
+	user := &client.User{
+		Id:            id,
+		Login:         login,
+		Notifications: []*client.Notification{},
+	}
+	_, err = d.collection.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (d *db) IsUserExists(ctx context.Context, user_id string) (bool, error) {
+	d.Lock()
+	defer d.Unlock()
 	id, err := primitive.ObjectIDFromHex(user_id)
 	if err != nil {
 		return false, err
 	}
-	filter := bson.M{"_id": id}
+	filter := bson.M{"id": id}
 	result := d.collection.FindOne(ctx, filter)
 	if err = result.Err(); err != nil {
 		return false, nil
@@ -37,11 +59,13 @@ func (d *db) IsUserExists(ctx context.Context, user_id string) (bool, error) {
 	return true, nil
 }
 func (d *db) SendNotification(ctx context.Context, notif *client.Notification, user_id string) error {
+	d.Lock()
+	defer d.Unlock()
 	id, err := primitive.ObjectIDFromHex(user_id)
 	if err != nil {
 		return err
 	}
-	filter := bson.M{"_id": id}
+	filter := bson.M{"id": id}
 	result := d.collection.FindOne(ctx, filter)
 	var u client.User
 	if err = result.Err(); err != nil {
