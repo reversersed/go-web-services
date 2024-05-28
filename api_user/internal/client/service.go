@@ -138,3 +138,27 @@ func (s *service) GetUserByLogin(ctx context.Context, login string) (*User, erro
 	}
 	return u, nil
 }
+func (s *service) DeleteUser(ctx context.Context, userId, password string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	u, err := s.storage.FindById(ctx, userId)
+	if err != nil {
+		return errormiddleware.NotFoundError([]string{"user with provided id does not exists"}, err.Error())
+	}
+
+	if err = bcrypt.CompareHashAndPassword(u.Password, []byte(password)); err != nil {
+		s.logger.Warnf("user %s (%s) tried to delete account with a wrong password", u.Login, userId)
+		return errormiddleware.BadRequestError([]string{"wrong password"}, err.Error())
+	}
+
+	err = s.storage.DeleteUser(ctx, userId)
+	if err != nil {
+		return errormiddleware.NotFoundError([]string{"user with provided id does not exists"}, err.Error())
+	}
+	s.logger.Warnf("user account %s (%s) has been deleted", u.Login, userId)
+	if err := s.rabbitSender.SendUserDeletedMessage(ctx, userId); err != nil {
+		s.logger.Errorf("can't send deleted user message: %v", err)
+	}
+	return nil
+}

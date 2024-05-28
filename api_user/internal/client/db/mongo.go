@@ -146,3 +146,19 @@ func (d *db) FindById(ctx context.Context, id string) (*client.User, error) {
 	}
 	return &u, nil
 }
+func (d *db) DeleteUser(ctx context.Context, userId string) error {
+	primitive_id, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{"_id": primitive_id}
+
+	result, err := d.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("user with provided id does not exist")
+	}
+	return nil
+}

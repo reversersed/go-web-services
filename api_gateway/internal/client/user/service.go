@@ -180,3 +180,33 @@ func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*U
 	}
 	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
+func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
+	c.base.Logger.Info("building request url...")
+	uri, err := c.base.BuildURL(c.Path+"/delete", nil)
+	if err != nil {
+		return fmt.Errorf("failed to build url: %v", err)
+	}
+	structs.DefaultTagName = "json"
+	body, err := json.Marshal(structs.Map(query))
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, uri, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed while request creation: %v", err)
+	}
+
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req = req.WithContext(reqCtx)
+	response, err := c.base.SendRequest(req)
+	if err != nil {
+		return err
+	}
+	if response.Valid {
+		return nil
+	}
+	return errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
+}

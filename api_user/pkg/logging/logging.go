@@ -6,8 +6,13 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"time"
 
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	dateTimeLayout = "2006-01-02 15.04.05"
 )
 
 type Hook struct {
@@ -62,16 +67,29 @@ func init() {
 	if err != nil || os.IsExist(err) {
 		panic("can't create logs directory")
 	}
-	logFile, err := os.OpenFile("logs/debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	err = os.MkdirAll("logs/debug", 0644)
+	if err != nil || os.IsExist(err) {
+		panic("can't create logs directory")
+	}
+	err = os.MkdirAll("logs/errors", 0644)
+	if err != nil || os.IsExist(err) {
+		panic("can't create logs directory")
+	}
+	err = os.MkdirAll("logs/warnings", 0644)
+	if err != nil || os.IsExist(err) {
+		panic("can't create logs directory")
+	}
+	t := time.Now().UTC().Format(dateTimeLayout)
+	logFile, err := os.OpenFile(fmt.Sprintf("logs/debug/%s.log", t), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
 	}
 
-	errorLogFile, err := os.OpenFile("logs/errors.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	errorLogFile, err := os.OpenFile(fmt.Sprintf("logs/errors/%s.log", t), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
 	}
-	warnLogFile, err := os.OpenFile("logs/warnings.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+	warnLogFile, err := os.OpenFile(fmt.Sprintf("logs/warnings/%s.log", t), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
 	if err != nil {
 		panic(fmt.Sprintf("[Message]: %s", err))
 	}

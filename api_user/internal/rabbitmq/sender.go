@@ -84,13 +84,9 @@ func (s *Sender) SendUserDeletedMessage(ctx context.Context, userId string) erro
 	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	body, err := json.Marshal(userId)
-	if err != nil {
-		return err
-	}
 	err = ch.PublishWithContext(cntx, "UserDeletedExchange", "#", false, false, amqp.Publishing{
 		ContentType: "text/plain",
-		Body:        body,
+		Body:        []byte(userId),
 	})
 	if err != nil {
 		s.logger.Errorf("Error sending user deleted message: %v", err)

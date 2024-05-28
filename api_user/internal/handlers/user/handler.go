@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
@@ -16,6 +17,7 @@ const (
 	url_register          = "/users/register"
 	url_email_confirmaton = "/users/email"
 	url_user_find         = "/users"
+	url_user_delete       = "/users/delete"
 )
 
 type Service interface {
@@ -25,6 +27,7 @@ type Service interface {
 	ValidateEmailConfirmationCode(ctx context.Context, userId string, code string) error
 	GetUserById(ctx context.Context, userId string) (*client.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*client.User, error)
+	DeleteUser(ctx context.Context, userId, password string) error
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -36,6 +39,30 @@ func (h *Handler) Register(route *httprouter.Router) {
 	route.HandlerFunc(http.MethodPost, url_register, errormiddleware.Middleware(h.RegUser))
 	route.HandlerFunc(http.MethodGet, url_email_confirmaton, errormiddleware.Middleware(h.ConfirmEmail))
 	route.HandlerFunc(http.MethodGet, url_user_find, errormiddleware.Middleware(h.FindUser))
+	route.HandlerFunc(http.MethodDelete, url_user_delete, errormiddleware.Middleware(h.DeleteUser))
+}
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) error {
+	userId := r.Header.Get("User")
+	if len(userId) <= 0 {
+		return errormiddleware.UnauthorizedError([]string{"can't get user authorized id"}, "context id was empty")
+	}
+	type query struct {
+		Password string `json:"password"`
+	}
+	var Query query
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&Query); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	err := h.UserService.DeleteUser(ctx, userId, Query.Password)
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 	user_principal := r.URL.Query().Get("id")

@@ -63,6 +63,69 @@
                 }
             }
         },
+        "/users/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Only user can delete his own account. To delete user he needs to confirm his password",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Deletes user's account",
+                "parameters": [
+                    {
+                        "description": "User password",
+                        "name": "Password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.DeleteUserQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful response. User was deleted, need to remove his session"
+                    },
+                    "400": {
+                        "description": "Return's if user typed incorrect password",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Return's if service can't authorize user",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Return's if user is not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "501": {
+                        "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/users/email": {
             "get": {
                 "security": [
@@ -325,6 +388,17 @@
             ],
             "properties": {
                 "refreshtoken": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.DeleteUserQuery": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "password": {
                     "type": "string"
                 }
             }

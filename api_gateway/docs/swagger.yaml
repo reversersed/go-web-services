@@ -33,6 +33,13 @@ definitions:
     required:
     - refreshtoken
     type: object
+  user.DeleteUserQuery:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
   user.User:
     properties:
       email:
@@ -120,6 +127,48 @@ paths:
           schema:
             $ref: '#/definitions/errormiddleware.Error'
       summary: Finds user by id or login
+      tags:
+      - users
+  /users/delete:
+    delete:
+      description: Only user can delete his own account. To delete user he needs to
+        confirm his password
+      parameters:
+      - description: User password
+        in: body
+        name: Password
+        required: true
+        schema:
+          $ref: '#/definitions/user.DeleteUserQuery'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successful response. User was deleted, need to remove his session
+        "400":
+          description: Return's if user typed incorrect password
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "401":
+          description: Return's if service can't authorize user
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Return's if user is not authorized
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Returns if query was incorrect
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes user's account
       tags:
       - users
   /users/email:

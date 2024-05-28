@@ -29,7 +29,6 @@ func New() *Validator {
 	v.RegisterValidation("uppercase", validate_UppercaseCharacter)
 	v.RegisterValidation("digitrequired", validate_AtLeastOneDigit)
 	v.RegisterValidation("specialsymbol", validate_SpecialSymbol)
-
 	return &Validator{v}
 }
 func validate_PrimitiveId(field validator.FieldLevel) bool {

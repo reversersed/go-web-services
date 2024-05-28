@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
@@ -21,6 +22,7 @@ const (
 	url_register      = "/api/v1/users/register"
 	url_confirm_email = "/api/v1/users/email"
 	url_find_user     = "/api/v1/users"
+	url_delete_user   = "/api/v1/users/delete"
 )
 
 type UserService interface {
@@ -28,6 +30,7 @@ type UserService interface {
 	RegisterUser(ctx context.Context, query *model.UserRegisterQuery) (*model.User, error)
 	UserEmailConfirmation(ctx context.Context, code string) (int, error)
 	FindUser(ctx context.Context, userid string, login string) (*model.User, error)
+	DeleteUser(ctx context.Context, query *model.DeleteUserQuery) error
 }
 
 type Handler struct {
@@ -43,7 +46,42 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
 	router.HandlerFunc(http.MethodGet, url_confirm_email, jwt.Middleware(mw.Middleware(h.EmailConfirmation)))
 	router.HandlerFunc(http.MethodGet, url_find_user, mw.Middleware(h.FindUser))
+	router.HandlerFunc(http.MethodDelete, url_delete_user, jwt.Middleware(mw.Middleware(h.DeleteUser)))
 	h.Logger.Info("auth service registered")
+}
+
+// @Summary Deletes user's account
+// @Description Only user can delete his own account. To delete user he needs to confirm his password
+// @Tags users
+// @Produce json
+// @Param Password body model.DeleteUserQuery true "User password"
+// @Success 204 "Successful response. User was deleted, need to remove his session"
+// @Failure 400 {object} errormiddleware.Error "Return's if user typed incorrect password"
+// @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user"
+// @Failure 404 {object} errormiddleware.Error "Return's if user is not authorized"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
+// @Failure 501 {object} errormiddleware.Error "Returns if query was incorrect"
+// @Security ApiKeyAuth
+// @Router /users/delete [delete]
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) error {
+	var query model.DeleteUserQuery
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+	if err := h.Validator.Struct(query); err != nil {
+		return mw.ValidationError(err.(validator.ValidationErrors), "wrong request")
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	h.Logger.Infof("received user deletion request")
+	err := h.UserService.DeleteUser(ctx, &query)
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 
 // @Summary Confirm user's email

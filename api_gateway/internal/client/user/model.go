@@ -17,3 +17,6 @@ type UserRegisterQuery struct {
 	Email    string `json:"email" validate:"required,email" example:"user@example.com"`
 	Password string `json:"password" validate:"required,min=8,max=32,lowercase,uppercase,digitrequired,specialsymbol" example:"User!1password"`
 }
+type DeleteUserQuery struct {
+	Password string `json:"password" validate:"required"`
+}
