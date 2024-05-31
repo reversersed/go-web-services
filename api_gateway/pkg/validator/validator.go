@@ -37,7 +37,7 @@ func validate_PrimitiveId(field validator.FieldLevel) bool {
 	return (err == nil)
 }
 func validate_OnlyEnglish(field validator.FieldLevel) bool {
-	mathed, err := regexp.MatchString("[a-z][a-z\\d]", field.Field().String())
+	mathed, err := regexp.MatchString(`^[a-zA-Z]+$`, field.Field().String())
 	if err != nil {
 		return false
 	}
