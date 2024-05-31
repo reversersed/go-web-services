@@ -162,3 +162,21 @@ func (d *db) DeleteUser(ctx context.Context, userId string) error {
 	}
 	return nil
 }
+func (d *db) ChangeUserLogin(ctx context.Context, userId, newLogin string) error {
+	primitive_id, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return err
+	}
+	update := bson.M{"$set": bson.M{"login": newLogin, "logincooldown": time.Now().UTC().Unix() + (31 * 86400)}}
+	result, err := d.collection.UpdateByID(ctx, primitive_id, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errormiddleware.NotFoundError([]string{"user with provided id not found"}, fmt.Sprintf("matched count was == %d", result.MatchedCount))
+	}
+	if result.ModifiedCount == 0 {
+		return errormiddleware.NotFoundError([]string{"no user was updated"}, fmt.Sprintf("modified count was == %d", result.ModifiedCount))
+	}
+	return nil
+}

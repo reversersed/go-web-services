@@ -9,4 +9,5 @@ type Storage interface {
 	ApproveUserEmail(ctx context.Context, id string) error
 	AddUser(ctx context.Context, user *User) (string, error)
 	DeleteUser(ctx context.Context, userId string) error
+	ChangeUserLogin(ctx context.Context, userId, newLogin string) error
 }

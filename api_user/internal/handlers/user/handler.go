@@ -18,6 +18,7 @@ const (
 	url_email_confirmaton = "/users/email"
 	url_user_find         = "/users"
 	url_user_delete       = "/users/delete"
+	url_user_changelogin  = "/users/changename"
 )
 
 type Service interface {
@@ -28,6 +29,7 @@ type Service interface {
 	GetUserById(ctx context.Context, userId string) (*client.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*client.User, error)
 	DeleteUser(ctx context.Context, userId, password string) error
+	UpdateUserLogin(ctx context.Context, userId, newLogin string) (*client.User, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -40,24 +42,48 @@ func (h *Handler) Register(route *httprouter.Router) {
 	route.HandlerFunc(http.MethodGet, url_email_confirmaton, errormiddleware.Middleware(h.ConfirmEmail))
 	route.HandlerFunc(http.MethodGet, url_user_find, errormiddleware.Middleware(h.FindUser))
 	route.HandlerFunc(http.MethodDelete, url_user_delete, errormiddleware.Middleware(h.DeleteUser))
+	route.HandlerFunc(http.MethodPatch, url_user_changelogin, errormiddleware.Middleware(h.ChangeUserLogin))
+}
+func (h *Handler) ChangeUserLogin(w http.ResponseWriter, r *http.Request) error {
+	userId := r.Header.Get("User")
+	if len(userId) <= 0 {
+		return errormiddleware.UnauthorizedError([]string{"can't get user authorized id"}, "context id was empty")
+	}
+	var query client.ChangeUserLoginQuery
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	u, err := h.UserService.UpdateUserLogin(ctx, userId, query.Login)
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	object, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	w.Write(object)
+	return nil
 }
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) error {
 	userId := r.Header.Get("User")
 	if len(userId) <= 0 {
 		return errormiddleware.UnauthorizedError([]string{"can't get user authorized id"}, "context id was empty")
 	}
-	type query struct {
-		Password string `json:"password"`
-	}
-	var Query query
+	var query client.DeleteUserQuery
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(&Query); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	err := h.UserService.DeleteUser(ctx, userId, Query.Password)
+	err := h.UserService.DeleteUser(ctx, userId, query.Password)
 	if err != nil {
 		return err
 	}

@@ -40,6 +40,15 @@ definitions:
     required:
     - password
     type: object
+  user.UpdateUserLoginQuery:
+    properties:
+      newlogin:
+        maxLength: 16
+        minLength: 4
+        type: string
+    required:
+    - newlogin
+    type: object
   user.User:
     properties:
       email:
@@ -127,6 +136,54 @@ paths:
           schema:
             $ref: '#/definitions/errormiddleware.Error'
       summary: Finds user by id or login
+      tags:
+      - users
+  /users/changename:
+    patch:
+      description: New login must be unique. Login changing are available only 1 time
+        per month
+      parameters:
+      - description: New user login. Must be unique
+        in: body
+        name: NewLogin
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpdateUserLoginQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response. User's login was updated
+          schema:
+            $ref: '#/definitions/jwt.JwtResponse'
+        "401":
+          description: Return's if service can't authorize user
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "403":
+          description: Return's if user has login changing cooldown
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Return's if user is not authorized
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "409":
+          description: Return's if new user's login already taken
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Returns if query was incorrect
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update user's login
       tags:
       - users
   /users/delete:

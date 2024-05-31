@@ -67,6 +67,8 @@ func ValidationError(errors validator.ValidationErrors, dev_message string) *Err
 			errs = append(errs, fmt.Sprintf("%s must contain at least one digit", err.Field()))
 		case "specialsymbol":
 			errs = append(errs, fmt.Sprintf("%s must contain at least one special symbol", err.Field()))
+		case "onlyenglish":
+			errs = append(errs, fmt.Sprintf("%s must contain only latin characters", err.Field()))
 		default:
 			errs = append(errs, err.Error())
 		}

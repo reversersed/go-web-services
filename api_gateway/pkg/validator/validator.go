@@ -29,11 +29,22 @@ func New() *Validator {
 	v.RegisterValidation("uppercase", validate_UppercaseCharacter)
 	v.RegisterValidation("digitrequired", validate_AtLeastOneDigit)
 	v.RegisterValidation("specialsymbol", validate_SpecialSymbol)
+	v.RegisterValidation("onlyenglish", validate_OnlyEnglish)
 	return &Validator{v}
 }
 func validate_PrimitiveId(field validator.FieldLevel) bool {
 	_, err := primitive.ObjectIDFromHex(field.Field().String())
 	return (err == nil)
+}
+func validate_OnlyEnglish(field validator.FieldLevel) bool {
+	mathed, err := regexp.MatchString("[a-z][a-z\\d]", field.Field().String())
+	if err != nil {
+		return false
+	}
+	if !mathed {
+		return false
+	}
+	return true
 }
 func validate_LowercaseCharacter(field validator.FieldLevel) bool {
 	mathed, err := regexp.MatchString("[a-z]+", field.Field().String())

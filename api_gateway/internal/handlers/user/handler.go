@@ -17,12 +17,13 @@ import (
 )
 
 const (
-	url_auth          = "/api/v1/users/login"
-	url_refresh       = "/api/v1/users/refresh"
-	url_register      = "/api/v1/users/register"
-	url_confirm_email = "/api/v1/users/email"
-	url_find_user     = "/api/v1/users"
-	url_delete_user   = "/api/v1/users/delete"
+	url_auth              = "/api/v1/users/login"
+	url_refresh           = "/api/v1/users/refresh"
+	url_register          = "/api/v1/users/register"
+	url_confirm_email     = "/api/v1/users/email"
+	url_find_user         = "/api/v1/users"
+	url_delete_user       = "/api/v1/users/delete"
+	url_update_user_login = "/api/v1/users/changename"
 )
 
 type UserService interface {
@@ -31,6 +32,7 @@ type UserService interface {
 	UserEmailConfirmation(ctx context.Context, code string) (int, error)
 	FindUser(ctx context.Context, userid string, login string) (*model.User, error)
 	DeleteUser(ctx context.Context, query *model.DeleteUserQuery) error
+	UpdateUserLogin(ctx context.Context, query *model.UpdateUserLoginQuery) (*model.User, error)
 }
 
 type Handler struct {
@@ -47,7 +49,51 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, url_confirm_email, jwt.Middleware(mw.Middleware(h.EmailConfirmation)))
 	router.HandlerFunc(http.MethodGet, url_find_user, mw.Middleware(h.FindUser))
 	router.HandlerFunc(http.MethodDelete, url_delete_user, jwt.Middleware(mw.Middleware(h.DeleteUser)))
+	router.HandlerFunc(http.MethodPatch, url_update_user_login, jwt.Middleware(mw.Middleware(h.UpdateUserLogin)))
 	h.Logger.Info("auth service registered")
+}
+
+// @Summary Update user's login
+// @Description New login must be unique. Login changing are available only 1 time per month
+// @Tags users
+// @Produce json
+// @Param NewLogin body model.UpdateUserLoginQuery true "New user login. Must be unique"
+// @Success 200 {object} jwt.JwtResponse "Successful response. User's login was updated"
+// @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user"
+// @Failure 403 {object} errormiddleware.Error "Return's if user has login changing cooldown"
+// @Failure 404 {object} errormiddleware.Error "Return's if user is not authorized"
+// @Failure 409 {object} errormiddleware.Error "Return's if new user's login already taken"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
+// @Failure 501 {object} errormiddleware.Error "Returns if query was incorrect"
+// @Security ApiKeyAuth
+// @Router /users/changename [patch]
+func (h *Handler) UpdateUserLogin(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Add("Content-Type", "application/json")
+	var query model.UpdateUserLoginQuery
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+	if err := h.Validator.Struct(query); err != nil {
+		return mw.ValidationError(err.(validator.ValidationErrors), "wrong request")
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	model, err := h.UserService.UpdateUserLogin(ctx, &query)
+	if err != nil {
+		return err
+	}
+	token, err := h.JwtService.GenerateAccessToken(model)
+	if err != nil {
+		h.Logger.Warn(err)
+		return err
+	}
+	data, _ := json.Marshal(token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return nil
 }
 
 // @Summary Deletes user's account

@@ -162,3 +162,32 @@ func (s *service) DeleteUser(ctx context.Context, userId, password string) error
 	}
 	return nil
 }
+func (s *service) UpdateUserLogin(ctx context.Context, userId, newLogin string) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_, err := s.storage.FindByLogin(ctx, newLogin)
+	if err == nil {
+		return nil, errormiddleware.NotUniqueError([]string{"this login has already taken"}, fmt.Sprintf("user login %s already taken", newLogin))
+	}
+	u, err := s.storage.FindById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if u.LoginCooldown >= uint64(time.Now().UTC().Unix()) {
+		return nil, errormiddleware.ForbiddenError([]string{fmt.Sprintf("login chaging will be available in %d days", (u.LoginCooldown - uint64(time.Now().UTC().Unix())/86400))}, "user has login changing cooldown")
+	}
+	err = s.storage.ChangeUserLogin(ctx, userId, newLogin)
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Infof("user %s (%s) has changed login to %s", u.Login, userId, newLogin)
+	u, err = s.storage.FindById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.rabbitSender.SendUserLoginChangedMessage(ctx, userId, newLogin); err != nil {
+		s.logger.Errorf("can't send deleted user message: %v", err)
+	}
+	return u, nil
+}

@@ -210,3 +210,38 @@ func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
 	}
 	return errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
+func (c *client) UpdateUserLogin(ctx context.Context, query *UpdateUserLoginQuery) (*User, error) {
+	c.base.Logger.Info("building request url...")
+	uri, err := c.base.BuildURL(c.Path+"/changename", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build url: %v", err)
+	}
+	structs.DefaultTagName = "json"
+	body, err := json.Marshal(structs.Map(query))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, uri, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed while request creation: %v", err)
+	}
+
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req = req.WithContext(reqCtx)
+	response, err := c.base.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	if response.Valid {
+		defer response.Body().Close()
+		var u User
+		if err = json.NewDecoder(response.Body()).Decode(&u); err != nil {
+			return nil, fmt.Errorf("failed to unmarshall response body: %v", err)
+		}
+		return &u, nil
+	}
+	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
+}
