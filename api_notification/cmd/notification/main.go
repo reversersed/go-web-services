@@ -53,10 +53,13 @@ func main() {
 
 	logger.Info("rabbitmq initializing...")
 	rabbit := rabbitClient.New(config.Rabbit, logger)
+	
 	notifReceiver := receivers.NewNotificationReceiver(rabbit.Connection, validator, logger, service)
 	notifReceiver.Start()
+
 	userDeletedReceiver := receivers.NewUserDeletedReceiver(rabbit.Connection, validator, logger, service)
 	userDeletedReceiver.Start()
+
 	userLoginChangedReceiver := receivers.NewUserLoginChangedReceiver(rabbit.Connection, validator, logger, service)
 	userLoginChangedReceiver.Start()
 

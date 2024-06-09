@@ -20,10 +20,11 @@ type DatabaseConfig struct {
 	Db_Auth string `env:"DB_AUTHDB"`
 }
 type SmtpConfig struct {
-	SmtpHost     string `env:"SMTP_HOST"`
-	SmtpPort     int    `env:"SMTP_PORT"`
-	SmtpLogin    string `env:"SMTP_LOGIN"`
-	SmtpPassword string `env:"SMTP_PASS"`
+	GatewayAddress string `env:"GTW_HOST"`
+	SmtpHost       string `env:"SMTP_HOST"`
+	SmtpPort       int    `env:"SMTP_PORT"`
+	SmtpLogin      string `env:"SMTP_LOGIN"`
+	SmtpPassword   string `env:"SMTP_PASS"`
 }
 type RabbitConfig struct {
 	Rabbit_Host string `env:"RABBITMQ_HOST" env-required:"true"`

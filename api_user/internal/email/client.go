@@ -15,6 +15,7 @@ type smtpInfo struct {
 	port     int
 	user     string
 	password string
+	gateway  string
 	active   bool
 }
 
@@ -28,6 +29,7 @@ func init() {
 		password: cfg.SmtpPassword,
 		port:     cfg.SmtpPort,
 		user:     cfg.SmtpLogin,
+		gateway:  cfg.GatewayAddress,
 		active:   true,
 	}
 
@@ -64,7 +66,7 @@ func SendEmailConfirmationMessage(receiver string, userlogin string, code string
 	}{
 		ProjectName:     "Example",
 		Login:           userlogin,
-		ConfirmationURL: fmt.Sprintf("http://localhost:9000/api/v1/users/email?code=%s", code),
+		ConfirmationURL: fmt.Sprintf("%s/api/v1/users/email?code=%s", smtpConfig.gateway, code),
 	})
 	if err != nil {
 		logger.Errorf("can't create email body: %s", err)
