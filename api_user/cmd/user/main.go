@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -36,7 +35,6 @@ func main() {
 
 	logger.Info("cache initializing...")
 	cache := freecache.NewCache(104857600) // 100 mb
-	debug.SetGCPercent(40)
 
 	logger.Info("database initializing...")
 	db_client, err := mongo.NewClient(context.Background(), config.Database)
