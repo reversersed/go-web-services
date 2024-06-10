@@ -51,7 +51,7 @@ func main() {
 	validator := validator.New()
 
 	logger.Info("services initializing....")
-	jwtService := jwt.NewService(cache, logger, validator)
+	jwtService := jwt.NewService(cache, logger, validator, config.Jwt.SecretToken)
 
 	logger.Info("handlers registration...")
 	router.GET("/swagger/:any", swaggerHandler)

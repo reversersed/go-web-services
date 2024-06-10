@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
@@ -23,13 +22,14 @@ type UserClaims struct {
 }
 
 type RefreshTokenQuery struct {
-	RefreshToken string `json:"refreshtoken" validate:"required,jwt"`
+	RefreshToken string `json:"refreshtoken" validate:"required"`
 }
 
 type jwtService struct {
 	Logger    *logging.Logger
 	Cache     cache.Cache
 	Validator *valid.Validator
+	Secret    string
 }
 type JwtResponse struct {
 	Login        string   `json:"login"`
@@ -42,8 +42,8 @@ type JwtService interface {
 	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
 }
 
-func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator) JwtService {
-	return &jwtService{Logger: logger, Cache: cache, Validator: validate}
+func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator, secret string) JwtService {
+	return &jwtService{Logger: logger, Cache: cache, Validator: validate, Secret: secret}
 }
 func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
 	if err := j.Validator.Struct(rt); err != nil {
@@ -64,14 +64,13 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	var u user.User
 	err = json.Unmarshal(userBytes, &u)
 	if err != nil {
-		j.Logger.Warn(err)
+		j.Logger.Error(err)
 		return nil, err
 	}
 	return j.GenerateAccessToken(&u)
 }
 func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
-	key := []byte(config.GetConfig().Jwt.SecretToken)
-	signer, err := jwt.NewSignerHS(jwt.HS256, key)
+	signer, err := jwt.NewSignerHS(jwt.HS256, []byte(j.Secret))
 	if err != nil {
 		j.Logger.Warn(err)
 		return nil, err
@@ -97,11 +96,8 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 	j.Logger.Info("creating refresh token...")
 	refreshTokenUuid := uuid.New()
 	userBytes, _ := json.Marshal(u)
-	err = j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int((7*24*time.Hour)/time.Second))
-	if err != nil {
-		j.Logger.Warn(err)
-		return nil, err
-	}
+	j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int((7*24*time.Hour)/time.Second))
+
 	responseToken := &JwtResponse{Login: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
 	return responseToken, nil
 }

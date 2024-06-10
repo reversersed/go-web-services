@@ -85,3 +85,26 @@ func BenchmarkCacheSetAndDelete(b *testing.B) {
 		cache.Delete([]byte{byte(5)})
 	}
 }
+func BenchmarkCacheEntryCount(b *testing.B) {
+	cache := NewCache(0)
+	cache.Set([]byte{byte(1)}, []byte{byte(1)}, 0)
+	cache.Set([]byte{byte(2)}, []byte{byte(1)}, 0)
+	cache.Set([]byte{byte(3)}, []byte{byte(1)}, 0)
+	cache.Set([]byte{byte(4)}, []byte{byte(1)}, 0)
+
+	for i := 0; i < b.N; i++ {
+		_ = cache.EntryCount()
+	}
+}
+func BenchmarkCacheErrorSet(b *testing.B) {
+	cache := NewCache(0) // min size 512 kb
+
+	var body []byte
+	for i := 0; i < 600; i++ { // creating byte slice of 600 bytes (if trying to insert 1/1024 value of cache size, error will be thrown)
+		body = slices.Insert(body, 0, byte(2))
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = cache.Set([]byte("2"), body, 0)
+	}
+}

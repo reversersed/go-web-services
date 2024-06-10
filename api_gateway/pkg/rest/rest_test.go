@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 )
+
+// URL Builder Tests
 
 var urlBilderCases = []struct {
 	Name     string
@@ -134,6 +138,7 @@ func TestClientClose(t *testing.T) {
 	}
 }
 
+// Send Request Test
 var requestCases = []struct {
 	Name     string
 	Excepted string
@@ -148,6 +153,13 @@ var requestCases = []struct {
 		Body:     nil,
 		Excepted: "hello world",
 		Code:     http.StatusOK,
+	},
+	{
+		Name:     "successful response with request body",
+		Method:   http.MethodPut,
+		Body:     strings.NewReader("tester"),
+		Excepted: "hello, tester",
+		Code:     http.StatusCreated,
 	},
 	{
 		Name:   "error returned",
@@ -176,6 +188,11 @@ func TestSendRequest(t *testing.T) {
 			}
 			errBody, _ := json.Marshal(err)
 			w.Write(errBody)
+		case http.MethodPut:
+			defer r.Body.Close()
+			name, _ := io.ReadAll(r.Body)
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(fmt.Sprintf("hello, %s", string(name))))
 		}
 	}))
 
