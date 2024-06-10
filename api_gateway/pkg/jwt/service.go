@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
@@ -29,7 +30,7 @@ type jwtService struct {
 	Logger    *logging.Logger
 	Cache     cache.Cache
 	Validator *valid.Validator
-	Secret    string
+	secret    string
 }
 type JwtResponse struct {
 	Login        string   `json:"login"`
@@ -38,12 +39,13 @@ type JwtResponse struct {
 	RefreshToken string   `json:"refreshtoken"`
 }
 type JwtService interface {
+	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
 	GenerateAccessToken(u *user.User) (*JwtResponse, error)
 	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
 }
 
 func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator, secret string) JwtService {
-	return &jwtService{Logger: logger, Cache: cache, Validator: validate, Secret: secret}
+	return &jwtService{Logger: logger, Cache: cache, Validator: validate, secret: secret}
 }
 func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
 	if err := j.Validator.Struct(rt); err != nil {
@@ -70,7 +72,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	return j.GenerateAccessToken(&u)
 }
 func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
-	signer, err := jwt.NewSignerHS(jwt.HS256, []byte(j.Secret))
+	signer, err := jwt.NewSignerHS(jwt.HS256, []byte(j.secret))
 	if err != nil {
 		j.Logger.Warn(err)
 		return nil, err

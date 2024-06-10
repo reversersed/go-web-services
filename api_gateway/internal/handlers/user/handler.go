@@ -46,10 +46,10 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, mw.Middleware(h.Authenticate))
 	router.HandlerFunc(http.MethodPost, url_refresh, mw.Middleware(h.UpdateToken))
 	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
-	router.HandlerFunc(http.MethodGet, url_confirm_email, jwt.Middleware(mw.Middleware(h.EmailConfirmation)))
+	router.HandlerFunc(http.MethodGet, url_confirm_email, h.JwtService.Middleware(mw.Middleware(h.EmailConfirmation)))
 	router.HandlerFunc(http.MethodGet, url_find_user, mw.Middleware(h.FindUser))
-	router.HandlerFunc(http.MethodDelete, url_delete_user, jwt.Middleware(mw.Middleware(h.DeleteUser)))
-	router.HandlerFunc(http.MethodPatch, url_update_user_login, jwt.Middleware(mw.Middleware(h.UpdateUserLogin)))
+	router.HandlerFunc(http.MethodDelete, url_delete_user, h.JwtService.Middleware(mw.Middleware(h.DeleteUser)))
+	router.HandlerFunc(http.MethodPatch, url_update_user_login, h.JwtService.Middleware(mw.Middleware(h.UpdateUserLogin)))
 	h.Logger.Info("auth service registered")
 }
 
