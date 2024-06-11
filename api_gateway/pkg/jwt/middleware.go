@@ -26,6 +26,7 @@ func (s *jwtService) Middleware(h http.HandlerFunc, roles ...string) http.Handle
 		key := []byte(s.secret)
 		verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
 		if err != nil {
+			s.Logger.Errorf("error creating verifier for key. key length = %d, error = %v", len(key), err)
 			unauthorized(w, err)
 			return
 		}

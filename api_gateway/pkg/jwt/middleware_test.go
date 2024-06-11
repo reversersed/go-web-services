@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/cristalhq/jwt/v3"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
@@ -21,9 +23,11 @@ var testCases = []struct {
 	UserRole     []string
 	RequiredRole string
 	StatusCode   int
-	Err          error
 }{
-	{"default user authorization", "userid", []string{"user"}, "", 200, nil},
+	{"default user authorization", "userid", []string{"user"}, "", 200},
+	{"default admin authorization", "userid", []string{"user", "admin"}, "admin", 200},
+	{"admin authorization as user", "uid", []string{"user","admin"}, "", 200},
+	{"user authorization as admin", "uid", []string{"user"}, "admin", 403},
 }
 
 func TestMiddleware(t *testing.T) {
@@ -62,12 +66,100 @@ func TestMiddleware(t *testing.T) {
 		})
 	}
 }
+func TestEmptyRequestMiddleware(t *testing.T) {
+	log, _ := test.NewNullLogger()
+	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
+	val := validator.New()
+	cache := freecache.NewCache(0)
+	service := NewService(cache, logger, val, "")
+	handler := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+	handler.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
+	}
+}
 func TestNilKeyMiddleware(t *testing.T) {
+	log, _ := test.NewNullLogger()
+	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
+	val := validator.New()
+	cache := freecache.NewCache(0)
+	service := NewService(cache, logger, val, "")
+	handler := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	w := httptest.NewRecorder()
+	signer, _ := jwt.NewSignerHS(jwt.HS256, []byte("secretCode"))
+	builder := jwt.NewBuilder(signer)
 
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        "userId",
+			Audience:  []string{"user"},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
+		},
+		Roles: []string{"user"},
+		Login: "user",
+		Email: "user@example.com",
+	}
+	token, _ := builder.Build(claims)
+
+	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
+	handler.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
+	}
 }
 func TestNilTokenMiddleware(t *testing.T) {
-
+	log, _ := test.NewNullLogger()
+	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
+	val := validator.New()
+	cache := freecache.NewCache(0)
+	service := NewService(cache, logger, val, "secretCode")
+	handler := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+	r.Header.Add("Authorization", "Bearer ")
+	handler.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
+	}
 }
 func TestOldTokenMiddleware(t *testing.T) {
+	log, _ := test.NewNullLogger()
+	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
+	val := validator.New()
+	cache := freecache.NewCache(0)
+	service := NewService(cache, logger, val, "secretCode")
+	handler := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	signer, _ := jwt.NewSignerHS(jwt.HS256, []byte("secretCode"))
+	builder := jwt.NewBuilder(signer)
 
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        "userId",
+			Audience:  []string{"user"},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
+		},
+		Roles: []string{"user"},
+		Login: "user",
+		Email: "user@example.com",
+	}
+	token, _ := builder.Build(claims)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
+	handler.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
+	}
 }
