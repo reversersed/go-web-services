@@ -19,6 +19,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/shutdown"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
+	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -80,7 +81,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	}
 
 	server = &http.Server{
-		Handler:      router,
+		Handler:      cors.AllowAll().Handler(router),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

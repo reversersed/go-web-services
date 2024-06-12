@@ -12,24 +12,20 @@ type cacherepo struct {
 	cache *freecache.Cache
 }
 
+func NewCache(size int) cache.Cache {
+	return &cacherepo{cache: freecache.NewCache(size)}
+}
 func (c *cacherepo) EntryCount() int64 {
 	c.Lock()
 	defer c.Unlock()
 
 	return c.cache.EntryCount()
 }
-func NewCache(size int) cache.Cache {
-	return &cacherepo{cache: freecache.NewCache(size)}
-}
-
-func (r *cacherepo) GetIterator() cache.Iterator {
-	return &iterator{r.cache.NewIterator()}
-}
-
 func (r *cacherepo) Get(uuid []byte) ([]byte, error) {
 	r.Lock()
 	defer r.Unlock()
-	return r.cache.Get(uuid)
+	got, err := r.cache.Get(uuid)
+	return got, err
 }
 
 func (r *cacherepo) Set(key, val []byte, expireIn int) error {

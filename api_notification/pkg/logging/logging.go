@@ -17,11 +17,15 @@ const (
 )
 
 type Hook struct {
+	sync.Mutex
 	Writer    []io.Writer
 	LogLevels []logrus.Level
 }
 
 func (hook *Hook) Fire(entry *logrus.Entry) error {
+	hook.Lock()
+	defer hook.Unlock()
+	
 	line, err := entry.String()
 	if err != nil {
 		return err
@@ -108,8 +112,4 @@ func GetLogger() *Logger {
 		e = logrus.NewEntry(l)
 	})
 	return &Logger{e}
-}
-
-func (l *Logger) NewLoggerWithFields(field string, value interface{}) *Logger {
-	return &Logger{l.WithField(field, value)}
 }

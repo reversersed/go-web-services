@@ -423,11 +423,32 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "errormiddleware.Code": {
+            "type": "string",
+            "enum": [
+                "IE-0001",
+                "IE-0002",
+                "IE-0003",
+                "IE-0004",
+                "IE-0005",
+                "IE-0006",
+                "IE-0007"
+            ],
+            "x-enum-varnames": [
+                "InternalErrorCode",
+                "NotFoundErrorCode",
+                "BadRequestErrorCode",
+                "ValidationErrorCode",
+                "UnauthorizedErrorCode",
+                "NotUniqueErrorCode",
+                "ForbiddenErrorCode"
+            ]
+        },
         "errormiddleware.Error": {
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
+                    "$ref": "#/definitions/errormiddleware.Code"
                 },
                 "dev_message": {
                     "type": "string"

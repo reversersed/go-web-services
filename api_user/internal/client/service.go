@@ -55,10 +55,10 @@ func (s *service) SendEmailConfirmation(ctx context.Context, userId string) erro
 func (s *service) ValidateEmailConfirmationCode(ctx context.Context, userId string, code string) error {
 	cached_code, err := s.cache.Get([]byte(fmt.Sprintf("code%s", userId)))
 	if err != nil {
-		return errormiddleware.ValidationErrorByString([]string{"user has no stored code or code is expired"}, "can't find cached code by user's email")
+		return errormiddleware.NotFoundError([]string{"user has no stored code or code is expired"}, "can't find cached code by user's email")
 	}
 	if string(cached_code) != code {
-		return errormiddleware.ValidationErrorByString([]string{"code is incorrect"}, "code has found in cache, but provided code is incorrect. maybe the wrong link")
+		return errormiddleware.NotFoundError([]string{"code is incorrect"}, "code has found in cache, but provided code is incorrect. maybe the wrong link")
 	}
 	s.cache.Delete([]byte(fmt.Sprintf("cd%s", userId)))
 	s.cache.Delete([]byte(fmt.Sprintf("code%s", userId)))

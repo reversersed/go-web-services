@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 )
 
 type CustomResponse struct {
@@ -21,9 +23,9 @@ func (r *CustomResponse) StatusCode() int {
 }
 
 type CustomError struct {
-	Message          []string `json:"messages,omitempty"`
-	ErrorCode        string   `json:"code,omitempty"`
-	DeveloperMessage string   `json:"dev_message,omitempty"`
+	Message          []string             `json:"messages,omitempty"`
+	ErrorCode        errormiddleware.Code `json:"code,omitempty"`
+	DeveloperMessage string               `json:"dev_message,omitempty"`
 }
 
 func (e CustomError) Error() string {

@@ -43,13 +43,13 @@ type Handler struct {
 }
 
 func (h *Handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodPost, url_auth, mw.Middleware(h.Authenticate))
-	router.HandlerFunc(http.MethodPost, url_refresh, mw.Middleware(h.UpdateToken))
-	router.HandlerFunc(http.MethodPost, url_register, mw.Middleware(h.UserRegister))
-	router.HandlerFunc(http.MethodGet, url_confirm_email, h.JwtService.Middleware(mw.Middleware(h.EmailConfirmation)))
-	router.HandlerFunc(http.MethodGet, url_find_user, mw.Middleware(h.FindUser))
-	router.HandlerFunc(http.MethodDelete, url_delete_user, h.JwtService.Middleware(mw.Middleware(h.DeleteUser)))
-	router.HandlerFunc(http.MethodPatch, url_update_user_login, h.JwtService.Middleware(mw.Middleware(h.UpdateUserLogin)))
+	router.HandlerFunc(http.MethodPost, url_auth, h.Logger.Middleware(mw.Middleware(h.Authenticate)))
+	router.HandlerFunc(http.MethodPost, url_refresh, h.Logger.Middleware(mw.Middleware(h.UpdateToken)))
+	router.HandlerFunc(http.MethodPost, url_register, h.Logger.Middleware(mw.Middleware(h.UserRegister)))
+	router.HandlerFunc(http.MethodGet, url_confirm_email, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.EmailConfirmation))))
+	router.HandlerFunc(http.MethodGet, url_find_user, h.Logger.Middleware(mw.Middleware(h.FindUser)))
+	router.HandlerFunc(http.MethodDelete, url_delete_user, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.DeleteUser))))
+	router.HandlerFunc(http.MethodPatch, url_update_user_login, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.UpdateUserLogin))))
 	h.Logger.Info("auth service registered")
 }
 
@@ -68,7 +68,7 @@ func (h *Handler) Register(router *httprouter.Router) {
 // @Security ApiKeyAuth
 // @Router /users/changename [patch]
 func (h *Handler) UpdateUserLogin(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	var query model.UpdateUserLoginQuery
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
@@ -142,9 +142,8 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) error {
 // @Failure 400 {object} errormiddleware.Error "Return's if user's email already confirmed"
 // @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user"
 // @Failure 403 {object} errormiddleware.Error "Return's if email can't be resend now (cooldown still active)"
-// @Failure 404 {object} errormiddleware.Error "Return's if user is authorized, but service can't identity him"
+// @Failure 404 {object} errormiddleware.Error "Return's if service can't find user's code or code is expired"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
-// @Failure 501 {object} errormiddleware.Error "Returns when provided confirmation code is incorrect or code is expired"
 // @Security ApiKeyAuth
 // @Router /users/email [get]
 func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) error {
@@ -219,7 +218,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytes)
 	return nil
 }

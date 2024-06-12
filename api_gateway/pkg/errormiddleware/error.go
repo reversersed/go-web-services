@@ -8,13 +8,25 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type Code string
+
+const (
+	InternalErrorCode     Code = "IE-0001"
+	NotFoundErrorCode     Code = "IE-0002"
+	BadRequestErrorCode   Code = "IE-0003"
+	ValidationErrorCode   Code = "IE-0004"
+	UnauthorizedErrorCode Code = "IE-0005"
+	NotUniqueErrorCode    Code = "IE-0006"
+	ForbiddenErrorCode    Code = "IE-0007"
+)
+
 type Error struct {
 	Message          []string `json:"messages,omitempty"`
 	DeveloperMessage string   `json:"dev_message,omitempty"`
-	Code             string   `json:"code,omitempty"`
+	Code             Code     `json:"code,omitempty"`
 }
 
-func NewError(message []string, code, dev_message string) *Error {
+func NewError(message []string, code Code, dev_message string) *Error {
 	return &Error{
 		Code:             code,
 		Message:          message,
@@ -25,27 +37,27 @@ func NewError(message []string, code, dev_message string) *Error {
 func (e *Error) Error() string {
 	return strings.Join(e.Message, ", ")
 }
-func (e *Error) Unwrap() error { return fmt.Errorf(strings.Join(e.Message, ", ")) }
 
 func (e *Error) Marshall() []byte {
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return nil
-	}
+	bytes, _ := json.Marshal(e)
 	return bytes
 }
 func sysError(message []string) *Error {
-	return NewError(message, "IE-0001", "Something wrong happened while service executing")
+	return NewError(message, InternalErrorCode, "Something wrong happened while service executing")
 }
 func NotFoundError(message []string, dev_message string) *Error {
-	return NewError(message, "IE-0002", dev_message)
+	return NewError(message, NotFoundErrorCode, dev_message)
 }
 func BadRequestError(message []string, dev_message string) *Error {
-	return NewError(message, "IE-0003", dev_message)
+	return NewError(message, BadRequestErrorCode, dev_message)
 }
-func ValidationError(errors validator.ValidationErrors, dev_message string) *Error {
+func ValidationError(errors error, dev_message string) *Error {
+	valErrors, ok := errors.(validator.ValidationErrors)
+	if !ok {
+		return sysError([]string{"unhandled errors type"})
+	}
 	var errs []string
-	for _, err := range errors {
+	for _, err := range valErrors {
 		switch err.Tag() {
 		case "required":
 			errs = append(errs, fmt.Sprintf("%s: field is required", err.Field()))
@@ -73,17 +85,14 @@ func ValidationError(errors validator.ValidationErrors, dev_message string) *Err
 			errs = append(errs, err.Error())
 		}
 	}
-	return NewError(errs, "IE-0004", dev_message)
+	return NewError(errs, ValidationErrorCode, dev_message)
 }
-func ValidationErrorByString(errors []string, dev_message string) *Error {
-	return NewError(errors, "IE-0004", dev_message)
+func UnauthorizedError(message []string, dev_message string) *Error {
+	return NewError(message, UnauthorizedErrorCode, dev_message)
 }
-func UnauthorizedError(errors []string, dev_message string) *Error {
-	return NewError(errors, "IE-0005", dev_message)
+func NotUniqueError(message []string, dev_message string) *Error {
+	return NewError(message, NotUniqueErrorCode, dev_message)
 }
-func NotUniqueError(errors []string, dev_message string) *Error {
-	return NewError(errors, "IE-0006", dev_message)
-}
-func ForbiddenError(errors []string, dev_message string) *Error {
-	return NewError(errors, "IE-0007", dev_message)
+func ForbiddenError(message []string, dev_message string) *Error {
+	return NewError(message, ForbiddenErrorCode, dev_message)
 }

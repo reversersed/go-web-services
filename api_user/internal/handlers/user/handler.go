@@ -37,12 +37,12 @@ type Handler struct {
 }
 
 func (h *Handler) Register(route *httprouter.Router) {
-	route.HandlerFunc(http.MethodPost, url_auth, errormiddleware.Middleware(h.AuthUser))
-	route.HandlerFunc(http.MethodPost, url_register, errormiddleware.Middleware(h.RegUser))
-	route.HandlerFunc(http.MethodGet, url_email_confirmaton, errormiddleware.Middleware(h.ConfirmEmail))
-	route.HandlerFunc(http.MethodGet, url_user_find, errormiddleware.Middleware(h.FindUser))
-	route.HandlerFunc(http.MethodDelete, url_user_delete, errormiddleware.Middleware(h.DeleteUser))
-	route.HandlerFunc(http.MethodPatch, url_user_changelogin, errormiddleware.Middleware(h.ChangeUserLogin))
+	route.HandlerFunc(http.MethodPost, url_auth, h.Logger.Middleware(errormiddleware.Middleware(h.AuthUser)))
+	route.HandlerFunc(http.MethodPost, url_register, h.Logger.Middleware(errormiddleware.Middleware(h.RegUser)))
+	route.HandlerFunc(http.MethodGet, url_email_confirmaton, h.Logger.Middleware(errormiddleware.Middleware(h.ConfirmEmail)))
+	route.HandlerFunc(http.MethodGet, url_user_find, h.Logger.Middleware(errormiddleware.Middleware(h.FindUser)))
+	route.HandlerFunc(http.MethodDelete, url_user_delete, h.Logger.Middleware(errormiddleware.Middleware(h.DeleteUser)))
+	route.HandlerFunc(http.MethodPatch, url_user_changelogin, h.Logger.Middleware(errormiddleware.Middleware(h.ChangeUserLogin)))
 }
 func (h *Handler) ChangeUserLogin(w http.ResponseWriter, r *http.Request) error {
 	userId := r.Header.Get("User")
@@ -62,7 +62,7 @@ func (h *Handler) ChangeUserLogin(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	object, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
 		return nil
 	}
@@ -121,7 +121,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
 		return nil
 	}
