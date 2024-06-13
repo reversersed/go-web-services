@@ -47,7 +47,7 @@ func TestMiddleWareErrorCodes(t *testing.T) {
 				t.Fatal("excepted error but got nil")
 			}
 			if errorCase.Err == nil && err == nil {
-				t.SkipNow()
+				return
 			}
 			Err, errOk := err.(*Error)
 			Error, ErrorOk := errorCase.Err.(*Error)
