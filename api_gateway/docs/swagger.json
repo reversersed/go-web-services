@@ -247,19 +247,13 @@
                         }
                     },
                     "404": {
-                        "description": "Return's if user is authorized, but service can't identity him",
+                        "description": "Return's if service can't find user's code or code is expired",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "500": {
                         "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    },
-                    "501": {
-                        "description": "Returns when provided confirmation code is incorrect or code is expired",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }

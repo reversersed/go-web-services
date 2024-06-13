@@ -117,6 +117,9 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
 	}
+	if query == nil {
+		return nil, errormiddleware.BadRequestError([]string{"wrong login or password"}, "received nil query")
+	}
 	structs.DefaultTagName = "json"
 	body, err := json.Marshal(structs.Map(query))
 	if err != nil {
@@ -150,6 +153,9 @@ func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*U
 	uri, err := c.base.BuildURL(c.Path+"/register", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
+	}
+	if query == nil {
+		return nil, errormiddleware.BadRequestError([]string{"wrong login or password"}, "received nil query")
 	}
 	structs.DefaultTagName = "json"
 	body, err := json.Marshal(structs.Map(query))
@@ -186,6 +192,9 @@ func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
 	if err != nil {
 		return fmt.Errorf("failed to build url: %v", err)
 	}
+	if query == nil {
+		return errormiddleware.BadRequestError([]string{"wrong login or password"}, "received nil query")
+	}
 	structs.DefaultTagName = "json"
 	body, err := json.Marshal(structs.Map(query))
 	if err != nil {
@@ -215,6 +224,9 @@ func (c *client) UpdateUserLogin(ctx context.Context, query *UpdateUserLoginQuer
 	uri, err := c.base.BuildURL(c.Path+"/changename", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
+	}
+	if query == nil {
+		return nil, errormiddleware.BadRequestError([]string{"wrong login or password"}, "received nil query")
 	}
 	structs.DefaultTagName = "json"
 	body, err := json.Marshal(structs.Map(query))
