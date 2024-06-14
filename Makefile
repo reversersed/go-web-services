@@ -6,6 +6,7 @@ run:
 	@echo stop - stopping docker containers
 	@echo start - full application starting [run tests and docker]
 	@echo deps - install project depedencies
+	@echo down - down the docker containers
 	@echo Example starting usage: make gen start
 
 test:
@@ -23,6 +24,9 @@ gen:
 
 stop:
 	@docker compose stop
+
+down:
+	@docker compose down
 
 start:
 	@make test
