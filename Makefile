@@ -2,10 +2,10 @@ run:
 	@echo Make commands:
 	@echo test - start project testing and create coverage files
 	@echo test-verbose - testing with -v flag, but with no coverage
-	@echo gen - (re)generage swagger documentation for gateway
+	@echo gen - [re]generage swagger documentation for gateway
 	@echo stop - stopping docker containers
-	@echo start - full application starting (run tests and docker)
-	@echo.
+	@echo start - full application starting [run tests and docker]
+	@echo deps - install project depedencies
 	@echo Example starting usage: make gen start
 
 test:
@@ -27,3 +27,8 @@ stop:
 start:
 	@make test
 	@docker compose up --build --timestamps --wait --wait-timeout 1800 --remove-orphans -d
+
+deps:
+	@go install github.com/swaggo/swag/cmd/swag@latest
+	@export PATH=$PATH:$HOME/go/bin
+	@echo all depedencies are installed
