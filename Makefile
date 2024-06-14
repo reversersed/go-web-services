@@ -9,9 +9,9 @@ run:
 	@echo Example starting usage: make gen start
 
 test:
-	@cd ./api_gateway/ && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
-	@cd ./api_user/ && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
-	@cd ./api_notification/ && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
+	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
+	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
+	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
 
 test-verbose:
 	@cd ./api_gateway/ && go test ./... -v
@@ -29,6 +29,10 @@ start:
 	@docker compose up --build --timestamps --wait --wait-timeout 1800 --remove-orphans -d
 
 deps:
+	@go install github.com/golang/mock/mockgen@v1.6.0
 	@go install github.com/swaggo/swag/cmd/swag@latest
+ifneq ($(OS), Windows_NT)
 	@export PATH=$PATH:$HOME/go/bin
+endif
+	
 	@echo all depedencies are installed

@@ -15,6 +15,8 @@ import (
 	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/service_mock.go
+
 type UserClaims struct {
 	jwt.RegisteredClaims
 	Login string   `json:"login"`

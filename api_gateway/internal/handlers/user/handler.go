@@ -26,6 +26,8 @@ const (
 	url_update_user_login = "/api/v1/users/changename"
 )
 
+//go:generate mockgen -source=handler.go -destination=mocks/service_mock.go
+
 type UserService interface {
 	AuthByLoginAndPassword(ctx context.Context, query *model.UserAuthQuery) (*model.User, error)
 	RegisterUser(ctx context.Context, query *model.UserRegisterQuery) (*model.User, error)
@@ -46,7 +48,7 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, h.Logger.Middleware(mw.Middleware(h.Authenticate)))
 	router.HandlerFunc(http.MethodPost, url_refresh, h.Logger.Middleware(mw.Middleware(h.UpdateToken)))
 	router.HandlerFunc(http.MethodPost, url_register, h.Logger.Middleware(mw.Middleware(h.UserRegister)))
-	router.HandlerFunc(http.MethodGet, url_confirm_email, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.EmailConfirmation))))
+	router.HandlerFunc(http.MethodPost, url_confirm_email, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.EmailConfirmation))))
 	router.HandlerFunc(http.MethodGet, url_find_user, h.Logger.Middleware(mw.Middleware(h.FindUser)))
 	router.HandlerFunc(http.MethodDelete, url_delete_user, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.DeleteUser))))
 	router.HandlerFunc(http.MethodPatch, url_update_user_login, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.UpdateUserLogin))))
@@ -145,7 +147,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) error {
 // @Failure 404 {object} errormiddleware.Error "Return's if service can't find user's code or code is expired"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
 // @Security ApiKeyAuth
-// @Router /users/email [get]
+// @Router /users/email [post]
 func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) error {
 	responseCode, err := h.UserService.UserEmailConfirmation(r.Context(), r.URL.Query().Get("code"))
 	if err != nil {
