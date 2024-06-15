@@ -55,17 +55,17 @@ func main() {
 	userHandler.Register(router)
 
 	logger.Info("starting application...")
-	start(router, logger, config, rabbit, rabbitSender)
+	start(router, logger, config.Server, rabbit, rabbitSender)
 }
-func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config, rabbit *RabbitClient.RabbitClient, rabbitSender *rabbitmq.Sender) {
+func start(router *httprouter.Router, logger *logging.Logger, cfg *config.ServerConfig, rabbit *RabbitClient.RabbitClient, rabbitSender *rabbitmq.Sender) {
 	var server *http.Server
 	var listener net.Listener
 
-	logger.Infof("bind application to host: %s and port: %d", cfg.Server.ListenAddress, cfg.Server.ListenPort)
+	logger.Infof("bind application to host: %s and port: %d", cfg.ListenAddress, cfg.ListenPort)
 
 	var err error
 
-	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.Server.ListenAddress, cfg.Server.ListenPort))
+	listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.ListenAddress, cfg.ListenPort))
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Config
 	go shutdown.Graceful([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
 		server, rabbit, rabbitSender)
 
-	logger.Info("application initialized and started")
+	logger.Infof("application initialized and started as %s", cfg.Environment)
 
 	if err := server.Serve(listener); err != nil {
 		switch {

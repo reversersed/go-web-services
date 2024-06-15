@@ -10,6 +10,7 @@ import (
 type ServerConfig struct {
 	ListenAddress string `env:"IP_ADDR" env-required:"true"`
 	ListenPort    int    `env:"PORT" env-required:"true"`
+	Environment   string `env:"ENVIRONMENT"`
 }
 type UrlConfig struct {
 	UserServiceURL string `env:"SRV_URL_USER" env-required:"true"`
@@ -38,6 +39,9 @@ func GetConfig() *Config {
 			desc, _ := cleanenv.GetDescription(cfg, nil)
 			logger.Error(desc)
 			logger.Fatal(err)
+		}
+		if len(srvCfg.Environment) == 0 {
+			srvCfg.Environment = "debug"
 		}
 		if err := cleanenv.ReadConfig("config/.env", urlCfg); err != nil {
 			desc, _ := cleanenv.GetDescription(cfg, nil)

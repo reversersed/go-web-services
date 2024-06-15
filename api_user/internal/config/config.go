@@ -10,6 +10,7 @@ import (
 type ServerConfig struct {
 	ListenAddress string `env:"HOST" env-required:"true"`
 	ListenPort    int    `env:"PORT" env-required:"true"`
+	Environment   string `env:"ENVIRONMENT"`
 }
 type DatabaseConfig struct {
 	Db_Host string `env:"DB_HOST" env-required:"true"`
@@ -55,6 +56,9 @@ func GetConfig() *Config {
 			desc, _ := cleanenv.GetDescription(cfg, nil)
 			logger.Error(desc)
 			logger.Fatal(err)
+		}
+		if len(srvCfg.Environment) == 0 {
+			srvCfg.Environment = "debug"
 		}
 		if err := cleanenv.ReadConfig("config/.env", dbCfg); err != nil {
 			desc, _ := cleanenv.GetDescription(cfg, nil)
