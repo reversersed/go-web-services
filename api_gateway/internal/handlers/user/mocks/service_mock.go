@@ -6,6 +6,7 @@ package mock_user
 
 import (
 	context "context"
+	http "net/http"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -122,4 +123,76 @@ func (m *MockUserService) UserEmailConfirmation(ctx context.Context, code string
 func (mr *MockUserServiceMockRecorder) UserEmailConfirmation(ctx, code interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserEmailConfirmation", reflect.TypeOf((*MockUserService)(nil).UserEmailConfirmation), ctx, code)
+}
+
+// MockJwtService is a mock of JwtService interface.
+type MockJwtService struct {
+	ctrl     *gomock.Controller
+	recorder *MockJwtServiceMockRecorder
+}
+
+// MockJwtServiceMockRecorder is the mock recorder for MockJwtService.
+type MockJwtServiceMockRecorder struct {
+	mock *MockJwtService
+}
+
+// NewMockJwtService creates a new mock instance.
+func NewMockJwtService(ctrl *gomock.Controller) *MockJwtService {
+	mock := &MockJwtService{ctrl: ctrl}
+	mock.recorder = &MockJwtServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockJwtService) EXPECT() *MockJwtServiceMockRecorder {
+	return m.recorder
+}
+
+// GenerateAccessToken mocks base method.
+func (m *MockJwtService) GenerateAccessToken(u *user.User) (*user.JwtResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateAccessToken", u)
+	ret0, _ := ret[0].(*user.JwtResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateAccessToken indicates an expected call of GenerateAccessToken.
+func (mr *MockJwtServiceMockRecorder) GenerateAccessToken(u interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAccessToken", reflect.TypeOf((*MockJwtService)(nil).GenerateAccessToken), u)
+}
+
+// Middleware mocks base method.
+func (m *MockJwtService) Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{h}
+	for _, a := range roles {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Middleware", varargs...)
+	ret0, _ := ret[0].(http.HandlerFunc)
+	return ret0
+}
+
+// Middleware indicates an expected call of Middleware.
+func (mr *MockJwtServiceMockRecorder) Middleware(h interface{}, roles ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{h}, roles...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Middleware", reflect.TypeOf((*MockJwtService)(nil).Middleware), varargs...)
+}
+
+// UpdateRefreshToken mocks base method.
+func (m *MockJwtService) UpdateRefreshToken(query *user.RefreshTokenQuery) (*user.JwtResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRefreshToken", query)
+	ret0, _ := ret[0].(*user.JwtResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateRefreshToken indicates an expected call of UpdateRefreshToken.
+func (mr *MockJwtServiceMockRecorder) UpdateRefreshToken(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRefreshToken", reflect.TypeOf((*MockJwtService)(nil).UpdateRefreshToken), query)
 }

@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
@@ -15,17 +14,11 @@ import (
 	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
-//go:generate mockgen -source=service.go -destination=mocks/service_mock.go
-
 type UserClaims struct {
 	jwt.RegisteredClaims
 	Login string   `json:"login"`
 	Roles []string `json:"roles"`
 	Email string   `json:"email"`
-}
-
-type RefreshTokenQuery struct {
-	RefreshToken string `json:"refreshtoken" validate:"required"`
 }
 
 type jwtService struct {
@@ -34,22 +27,11 @@ type jwtService struct {
 	Validator *valid.Validator
 	secret    string
 }
-type JwtResponse struct {
-	Login        string   `json:"login"`
-	Roles        []string `json:"roles"`
-	Token        string   `json:"token"`
-	RefreshToken string   `json:"refreshtoken"`
-}
-type JwtService interface {
-	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
-	GenerateAccessToken(u *user.User) (*JwtResponse, error)
-	UpdateRefreshToken(query *RefreshTokenQuery) (*JwtResponse, error)
-}
 
-func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator, secret string) JwtService {
+func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator, secret string) *jwtService {
 	return &jwtService{Logger: logger, Cache: cache, Validator: validate, secret: secret}
 }
-func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, error) {
+func (j *jwtService) UpdateRefreshToken(rt *user.RefreshTokenQuery) (*user.JwtResponse, error) {
 	if err := j.Validator.Struct(rt); err != nil {
 		tp, ok := err.(validator.ValidationErrors)
 		if ok {
@@ -73,7 +55,7 @@ func (j *jwtService) UpdateRefreshToken(rt *RefreshTokenQuery) (*JwtResponse, er
 	}
 	return j.GenerateAccessToken(&u)
 }
-func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
+func (j *jwtService) GenerateAccessToken(u *user.User) (*user.JwtResponse, error) {
 	signer, err := jwt.NewSignerHS(jwt.HS256, []byte(j.secret))
 	if err != nil {
 		j.Logger.Warn(err)
@@ -102,6 +84,6 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*JwtResponse, error) {
 	userBytes, _ := json.Marshal(u)
 	j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int((7*24*time.Hour)/time.Second))
 
-	responseToken := &JwtResponse{Login: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
+	responseToken := &user.JwtResponse{Login: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
 	return responseToken, nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/julienschmidt/httprouter"
-	mock_jwt "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt/mocks"
+	mock "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/user/mocks"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
@@ -31,7 +31,7 @@ func TestRegister(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	log, _ := test.NewNullLogger()
 	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
-	jwt := mock_jwt.NewMockJwtService(ctrl)
+	jwt := mock.NewMockJwtService(ctrl)
 	h := &Handler{JwtService: jwt, Logger: logger}
 	jwt.EXPECT().Middleware(gomock.Any()).AnyTimes()
 

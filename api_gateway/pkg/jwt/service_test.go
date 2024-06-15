@@ -93,7 +93,7 @@ func TestUpdateToken(t *testing.T) {
 			if err != nil {
 				t.Fatalf("excepted token but got error %v", err)
 			}
-			response, err := service.UpdateRefreshToken(&RefreshTokenQuery{RefreshToken: token.RefreshToken})
+			response, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
 			if testCase.Err == nil && err != testCase.Err {
 				t.Fatalf("excepted error nil but got %v", err)
 			} else if testCase.Err != nil && err == nil {
@@ -106,7 +106,7 @@ func TestUpdateToken(t *testing.T) {
 				t.Fatalf("excepted login %s but got %s", testCase.User.Login, response.Login)
 			}
 
-			_, err = service.UpdateRefreshToken(&RefreshTokenQuery{RefreshToken: token.RefreshToken})
+			_, err = service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
 			if err == nil {
 				t.Fatalf("excepted error but got nil")
 			}
@@ -133,7 +133,7 @@ func TestWrongRefreshToken(t *testing.T) {
 	cache := freecache.NewCache(0)
 	service := NewService(cache, logger, val, "secret")
 
-	_, err := service.UpdateRefreshToken(&RefreshTokenQuery{})
+	_, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{})
 	if err == nil {
 		t.Fatalf("excepted error but got nil")
 	}

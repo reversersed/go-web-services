@@ -23,3 +23,13 @@ type DeleteUserQuery struct {
 type UpdateUserLoginQuery struct {
 	NewLogin string `json:"newlogin" validate:"required,min=4,max=16,onlyenglish"`
 }
+
+type RefreshTokenQuery struct {
+	RefreshToken string `json:"refreshtoken" validate:"required"`
+}
+type JwtResponse struct {
+	Login        string   `json:"login"`
+	Roles        []string `json:"roles"`
+	Token        string   `json:"token"`
+	RefreshToken string   `json:"refreshtoken"`
+}

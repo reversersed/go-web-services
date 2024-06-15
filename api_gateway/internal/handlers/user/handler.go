@@ -11,7 +11,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
@@ -36,10 +35,14 @@ type UserService interface {
 	DeleteUser(ctx context.Context, query *model.DeleteUserQuery) error
 	UpdateUserLogin(ctx context.Context, query *model.UpdateUserLoginQuery) (*model.User, error)
 }
-
+type JwtService interface {
+	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
+	GenerateAccessToken(u *model.User) (*model.JwtResponse, error)
+	UpdateRefreshToken(query *model.RefreshTokenQuery) (*model.JwtResponse, error)
+}
 type Handler struct {
 	Logger      *logging.Logger
-	JwtService  jwt.JwtService
+	JwtService  JwtService
 	UserService UserService
 	Validator   *valid.Validator
 }
@@ -176,7 +179,7 @@ func (h *Handler) UpdateToken(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 
 	defer r.Body.Close()
-	var query jwt.RefreshTokenQuery
+	var query model.RefreshTokenQuery
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		return err
 	}
