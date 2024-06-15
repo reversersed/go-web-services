@@ -156,7 +156,7 @@ func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	if responseCode != 200 && responseCode != 204 {
+	if responseCode != http.StatusOK && responseCode != http.StatusNoContent {
 		h.Logger.Errorf("user service returned invalid status code (%d) for email confirmation request", responseCode)
 		return fmt.Errorf("service responded with invalid status code: %d", responseCode)
 	}
@@ -217,10 +217,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	bytes, err := json.Marshal(u)
-	if err != nil {
-		return err
-	}
+	bytes, _ := json.Marshal(u)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
