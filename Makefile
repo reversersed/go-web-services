@@ -7,7 +7,7 @@ run:
 	@echo start - full application starting [run tests and docker]
 	@echo deps - install project depedencies
 	@echo down - down the docker containers
-	@echo upgrade - upgrade and download all depedencies, then run tests (if tests are failed, changes will be canceled)
+	@echo upgrade - upgrade and download all depedencies, then run tests [if tests are failed, changes will be canceled]
 	@echo Example starting usage: make gen start
 
 test:
@@ -34,14 +34,14 @@ start:
 	@docker compose up --build --timestamps --wait --wait-timeout 1800 --remove-orphans -d
 
 deps:
-	@go install github.com/golang/mock/mockgen@v1.6.0
+	@go install github.com/golang/mock/mockgen@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
 
 	@cd ./api_gateway/ && go mod tidy
 	@cd ./api_notification/ && go mod tidy
 	@cd ./api_user/ && go mod tidy
 ifneq ($(OS), Windows_NT)
-	@export PATH=$PATH:$HOME/go/bin
+	@export PATH=$(PATH):$(HOME)/go/bin
 endif
 	@echo all depedencies are installed
 

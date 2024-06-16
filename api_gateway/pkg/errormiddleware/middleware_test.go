@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
@@ -40,24 +42,16 @@ func TestMiddleWareErrorCodes(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 			err := handler(w, r)
-			if w.Result().StatusCode != errorCase.ExceptedStatus {
-				t.Fatalf("excepted status code %d but got %d", errorCase.ExceptedStatus, w.Result().StatusCode)
-			}
-			if errorCase.Err != nil && err == nil {
-				t.Fatal("excepted error but got nil")
-			}
-			if errorCase.Err == nil && err == nil {
-				return
-			}
-			Err, errOk := err.(*Error)
-			Error, ErrorOk := errorCase.Err.(*Error)
-			if !errOk || !ErrorOk {
-				if err.Error() != errorCase.Err.Error() {
-					t.Errorf("excepted error %s but got %s", errorCase.Err.Error(), err.Error())
-				}
-			} else {
-				if Err.Code != Error.Code {
-					t.Errorf("excepeted error code %s but got %s", Error.Code, Err.Code)
+
+			assert.Equal(t, w.Result().StatusCode, errorCase.ExceptedStatus)
+			assert.Equal(t, errorCase.Err, err)
+			if err != nil {
+				Err, errOk := err.(*Error)
+				Error, ErrorOk := errorCase.Err.(*Error)
+				if !errOk || !ErrorOk {
+					assert.Equal(t, err.Error(), errorCase.Err.Error())
+				} else {
+					assert.Equal(t, Err.Code, Error.Code)
 				}
 			}
 		})
