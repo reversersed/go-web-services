@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	url_auth = "/users/auth"
+
 )
 
 type Service interface {

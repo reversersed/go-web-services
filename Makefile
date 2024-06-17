@@ -1,24 +1,36 @@
 run:
 	@echo Make commands:
-	@echo test - start project testing and create coverage files
-	@echo test-verbose - testing with -v flag, but with no coverage
+	@echo test - run full tests [unit+intergration] and create coverage files
+	@echo test-unit - run only unit-tests [no intergration] and create coverage files
 	@echo gen - [re]generage swagger documentation for gateway
 	@echo stop - stopping docker containers
 	@echo start - full application starting [run tests and docker]
 	@echo deps - install project depedencies
 	@echo down - down the docker containers
 	@echo upgrade - upgrade and download all depedencies, then run tests [if tests are failed, changes will be canceled]
+	@echo ! When running make test make sure docker is up
 	@echo Example starting usage: make gen start
 
 test:
-	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
-	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
-	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=coverage -coverpkg=./... && go tool cover -func=coverage -o coverage.func && go tool cover -html=coverage -o coverage.html
+	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 
-test-verbose:
-	@cd ./api_gateway/ && go test ./... -v
-	@cd ./api_user/ && go test ./... -v
-	@cd ./api_notification/ && go test ./... -v
+test-unit: test-folder-creation
+	@cd ./api_gateway/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_user/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_notification/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+
+test-folder-creation:
+ifeq ($(OS),Windows_NT)
+	@cd ./api_gateway/ && mkdir tests & echo.
+	@cd ./api_user/ && mkdir tests & echo.
+	@cd ./api_notification/ && mkdir tests & echo.
+else
+	@cd ./api_gateway/ && mkdir -p tests
+	@cd ./api_user/ && mkdir -p tests
+	@cd ./api_notification/ && mkdir -p tests
+endif
 
 gen:
 	@swag init --parseDependency -d ./api_gateway/internal/handlers -g ../../cmd/gateway/main.go -o ./api_gateway/docs
@@ -46,6 +58,8 @@ endif
 	@echo all depedencies are installed
 
 upgrade:
+	@$(MAKE) deps
+
 	@cd ./api_gateway/ && go get -u ./... && go mod tidy
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy

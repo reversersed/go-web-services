@@ -12,10 +12,10 @@ type RabbitClient struct {
 	*amqp.Connection
 }
 
-func New(config *config.RabbitConfig, logger *logging.Logger) *RabbitClient {
+func New(config *config.RabbitConfig, logger *logging.Logger) (*RabbitClient, error) {
 	connection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", config.Rabbit_User, config.Rabbit_Pass, config.Rabbit_Host, config.Rabbit_Port))
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
-	return &RabbitClient{connection}
+	return &RabbitClient{connection}, nil
 }

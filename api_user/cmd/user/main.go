@@ -43,7 +43,10 @@ func main() {
 	}
 
 	logger.Info("rabbitmq initializing...")
-	rabbit := RabbitClient.New(config.Rabbit, logger)
+	rabbit, err := RabbitClient.New(config.Rabbit, logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	rabbitSender := rabbitmq.NewSender(rabbit.Connection, logger)
 
 	logger.Info("services initializing...")

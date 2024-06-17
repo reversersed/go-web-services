@@ -52,7 +52,10 @@ func main() {
 	service := client.NewService(storage, logger, cache, validator)
 
 	logger.Info("rabbitmq initializing...")
-	rabbit := rabbitClient.New(config.Rabbit, logger)
+	rabbit, err := rabbitClient.New(config.Rabbit, logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	notifReceiver := receivers.NewNotificationReceiver(rabbit.Connection, validator, logger, service)
 	notifReceiver.Start()

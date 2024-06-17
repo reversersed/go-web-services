@@ -1,6 +1,6 @@
 */logs
 */config
-*/coverage*
+*/tests
 data/
 docgen.bat
 start.bat
