@@ -23,9 +23,9 @@ type service struct {
 	restClient *rest.RestClient
 }
 
-func NewService(storage Storage, logger *logging.Logger, cache cache.Cache, validator *valid.Validator) *service {
+func NewService(storage Storage, logger *logging.Logger, cache cache.Cache, validator *valid.Validator, cfg *config.UrlConfig) *service {
 	return &service{storage: storage, logger: logger, cache: cache, validator: validator, restClient: &rest.RestClient{
-		BaseURL: config.GetConfig().Urls.Url_User_Service,
+		BaseURL: cfg.Url_User_Service,
 		HttpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},

@@ -49,7 +49,7 @@ func main() {
 
 	logger.Info("services initializing...")
 	storage := db.NewStorage(db_client, config.Database.Db_Base, logger)
-	service := client.NewService(storage, logger, cache, validator)
+	service := client.NewService(storage, logger, cache, validator, config.Urls)
 
 	logger.Info("rabbitmq initializing...")
 	rabbit, err := rabbitClient.New(config.Rabbit, logger)
