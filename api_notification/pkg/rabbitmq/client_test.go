@@ -28,7 +28,9 @@ func TestNewClient(t *testing.T) {
 		ContainerRequest: req,
 		Started:          true,
 	})
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer func() {
 		err := container.Terminate(ctx)
 		assert.NoError(t, err)
@@ -42,6 +44,7 @@ func TestNewClient(t *testing.T) {
 	cfg := &config.RabbitConfig{Rabbit_Port: port.Port(), Rabbit_Pass: "password", Rabbit_User: "user"}
 	cfg.Rabbit_Host, err = container.Host(ctx)
 	assert.NoError(t, err)
+
 	_, err = New(cfg, logger)
 	assert.NoError(t, err)
 }

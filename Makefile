@@ -2,6 +2,7 @@ run:
 	@echo Make commands:
 	@echo test - run full tests [unit+intergration] and create coverage files
 	@echo test-unit - run only unit-tests [no intergration] and create coverage files
+	@echo test-verbose - run full tests with -v console output
 	@echo gen - [re]generage swagger documentation for gateway
 	@echo stop - stopping docker containers
 	@echo start - full application starting [run tests and docker]
@@ -11,7 +12,12 @@ run:
 	@echo ! When running make test make sure docker is up
 	@echo Example starting usage: make gen start
 
-test:
+test-verbose:
+	@cd ./api_gateway/ && go generate ./... && go test ./... -v
+	@cd ./api_user/ && go generate ./... && go test ./... -v
+	@cd ./api_notification/ && go generate ./... && go test ./... -v
+
+test: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
@@ -42,7 +48,7 @@ down:
 	@docker compose down
 
 start:
-	@make test
+	@make test-verbose
 	@docker compose up --build --timestamps --wait --wait-timeout 1800 --remove-orphans -d
 
 deps:
