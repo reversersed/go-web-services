@@ -63,7 +63,7 @@ func (h *Handler) Register(router *httprouter.Router) {
 // @Tags users
 // @Produce json
 // @Param NewLogin body model.UpdateUserLoginQuery true "New user login. Must be unique"
-// @Success 200 {object} jwt.JwtResponse "Successful response. User's login was updated"
+// @Success 200 {object} model.JwtResponse "Successful response. User's login was updated"
 // @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user"
 // @Failure 403 {object} errormiddleware.Error "Return's if user has login changing cooldown"
 // @Failure 404 {object} errormiddleware.Error "Return's if user is not authorized"
@@ -169,8 +169,8 @@ func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) erro
 // @Description Refresh token stored in cache and expires in 7 days. If system was restarted, all tokens are cleared and sessions are deleted
 // @Tags users
 // @Produce json
-// @Param query body jwt.RefreshTokenQuery true "Request query with user's refresh token"
-// @Success 200 {object} jwt.JwtResponse "Successful response. Returns the same data as in authorization"
+// @Param query body model.RefreshTokenQuery true "Request query with user's refresh token"
+// @Success 200 {object} model.JwtResponse "Successful response. Returns the same data as in authorization"
 // @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
 // @Failure 501 {object} errormiddleware.Error "Returns when provided data was not validated"
@@ -232,7 +232,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Tags users
 // @Param query body model.UserAuthQuery true "User credentials"
-// @Success 200 {object} jwt.JwtResponse "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache"
+// @Success 200 {object} model.JwtResponse "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache"
 // @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
 // @Failure 501 {object} errormiddleware.Error "Returns when provided data was not validated"
@@ -269,7 +269,7 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Tags users
 // @Param query body model.UserRegisterQuery true "User credentials"
-// @Success 200 {object} jwt.JwtResponse "Successful token response. Returns the same response as in authorization"
+// @Success 200 {object} model.JwtResponse "Successful token response. Returns the same response as in authorization"
 // @Failure 409 {object} errormiddleware.Error "Returns when there's already exist user with provided login"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
 // @Failure 501 {object} errormiddleware.Error "Returns when provided data was not validated"

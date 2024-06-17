@@ -14,16 +14,16 @@ func TestEntryCount(t *testing.T) {
 	cache.Set([]byte("2"), []byte("1"), 0)
 	cache.Set([]byte("3"), []byte("1"), 0)
 
-	assert.Equal(t, cache.EntryCount(), int64(3))
+	assert.EqualValues(t, cache.EntryCount(), 3)
 
 	cache.Set([]byte("0"), []byte("1"), 0)
 
-	assert.Equal(t, cache.EntryCount(), int64(4))
+	assert.EqualValues(t, cache.EntryCount(), 4)
 
 	cache.Delete([]byte("1"))
 	cache.Delete([]byte("2"))
 
-	assert.Equal(t, cache.EntryCount(), int64(2))
+	assert.EqualValues(t, cache.EntryCount(), 2)
 }
 func TestGetCache(t *testing.T) {
 	cache := NewCache(0)

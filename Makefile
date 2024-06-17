@@ -3,7 +3,7 @@ run:
 	@echo test - run full tests [unit+intergration] and create coverage files
 	@echo test-unit - run only unit-tests [no intergration] and create coverage files
 	@echo test-verbose - run full tests with -v console output
-	@echo gen - [re]generage swagger documentation for gateway
+	@echo gen - [re]generage swagger documentation and mocks
 	@echo stop - stopping docker containers
 	@echo start - full application starting [run tests and docker]
 	@echo deps - install project depedencies
@@ -40,6 +40,9 @@ endif
 
 gen:
 	@swag init --parseDependency -d ./api_gateway/internal/handlers -g ../../cmd/gateway/main.go -o ./api_gateway/docs
+	@cd ./api_gateway/ && go generate ./...
+	@cd ./api_user/ && go generate ./...
+	@cd ./api_notification/ && go generate ./...
 
 stop:
 	@docker compose stop
@@ -70,7 +73,15 @@ upgrade:
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy
 	
-	-@$(MAKE) test
+	-@$(MAKE) test-verbose
+ifeq ($(OS),Windows_NT)
+	ifneq %errorlevel% 0
+	    echo "*** Tests are failed, canceling the upgrade ***"
+		git reset
+		git checkout .
+		false
+	endif
+else
 	@if [ $$? -ne 0 ]; \
     then \
         echo "*** Tests are failed, canceling the upgrade ***"; \
@@ -78,4 +89,5 @@ upgrade:
 		git checkout .; \
         false; \
     fi
+endif
 	@echo All depedencies upgraded successfully;

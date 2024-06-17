@@ -100,7 +100,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful response. User's login was updated",
                         "schema": {
-                            "$ref": "#/definitions/jwt.JwtResponse"
+                            "$ref": "#/definitions/user.JwtResponse"
                         }
                     },
                     "401": {
@@ -206,7 +206,7 @@ const docTemplate = `{
             }
         },
         "/users/email": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -293,7 +293,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache",
                         "schema": {
-                            "$ref": "#/definitions/jwt.JwtResponse"
+                            "$ref": "#/definitions/user.JwtResponse"
                         }
                     },
                     "404": {
@@ -334,7 +334,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/jwt.RefreshTokenQuery"
+                            "$ref": "#/definitions/user.RefreshTokenQuery"
                         }
                     }
                 ],
@@ -342,7 +342,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful response. Returns the same data as in authorization",
                         "schema": {
-                            "$ref": "#/definitions/jwt.JwtResponse"
+                            "$ref": "#/definitions/user.JwtResponse"
                         }
                     },
                     "404": {
@@ -391,7 +391,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful token response. Returns the same response as in authorization",
                         "schema": {
-                            "$ref": "#/definitions/jwt.JwtResponse"
+                            "$ref": "#/definitions/user.JwtResponse"
                         }
                     },
                     "409": {
@@ -455,7 +455,18 @@ const docTemplate = `{
                 }
             }
         },
-        "jwt.JwtResponse": {
+        "user.DeleteUserQuery": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.JwtResponse": {
             "type": "object",
             "properties": {
                 "login": {
@@ -475,24 +486,13 @@ const docTemplate = `{
                 }
             }
         },
-        "jwt.RefreshTokenQuery": {
+        "user.RefreshTokenQuery": {
             "type": "object",
             "required": [
                 "refreshtoken"
             ],
             "properties": {
                 "refreshtoken": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.DeleteUserQuery": {
-            "type": "object",
-            "required": [
-                "password"
-            ],
-            "properties": {
-                "password": {
                     "type": "string"
                 }
             }

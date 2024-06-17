@@ -11,6 +11,8 @@ import (
 	valid "github.com/reversersed/go-web-services/tree/main/api_notification/pkg/validator"
 )
 
+//go:generate mockgen -source=userloginchanged.go -destination=mocks/userloginchanged.go
+
 type user_login_changed_service interface {
 	OnUserLoginChanged(ctx context.Context, query *client.UserLoginChangedMessage)
 }

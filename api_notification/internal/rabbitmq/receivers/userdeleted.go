@@ -9,6 +9,8 @@ import (
 	valid "github.com/reversersed/go-web-services/tree/main/api_notification/pkg/validator"
 )
 
+//go:generate mockgen -source=userdeleted.go -destination=mocks/userdeleted.go
+
 type user_deleted_service interface {
 	OnUserDeleted(ctx context.Context, userid string)
 }

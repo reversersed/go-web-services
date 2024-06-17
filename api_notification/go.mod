@@ -3,6 +3,7 @@ module github.com/reversersed/go-web-services/tree/main/api_notification
 go 1.22.1
 
 require (
+	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.31.0
 	go.mongodb.org/mongo-driver v1.15.1

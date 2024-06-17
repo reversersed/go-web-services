@@ -11,6 +11,8 @@ import (
 	valid "github.com/reversersed/go-web-services/tree/main/api_notification/pkg/validator"
 )
 
+//go:generate mockgen -source=notification.go -destination=mocks/notification.go
+
 type notification_service interface {
 	SendNotification(ctx context.Context, query *client.SendNotificationMessage)
 }
@@ -41,12 +43,12 @@ func (r *NotificationReceiver) Start() {
 	if err != nil {
 		r.logger.Fatal(err)
 	}
-	err = ch.ExchangeDeclare("notifications_exchange", "fanout", false, false, false, false, nil)
+	err = ch.ExchangeDeclare("NotificationExchange", "fanout", false, false, false, false, nil)
 	if err != nil {
 		r.logger.Fatal(err)
 	}
 
-	err = r.channel.QueueBind(queue.Name, "#", "notifications_exchange", false, nil)
+	err = r.channel.QueueBind(queue.Name, "#", "NotificationExchange", false, nil)
 	if err != nil {
 		r.logger.Fatal(err)
 	}
