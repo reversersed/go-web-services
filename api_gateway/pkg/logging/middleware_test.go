@@ -10,6 +10,7 @@ import (
 	errmw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var testCases = []struct {
@@ -36,9 +37,7 @@ func TestMiddleware(t *testing.T) {
 			handler(w, r)
 
 			entry := hook.LastEntry()
-			if entry.Message != testCase.ExceptedLastLog {
-				t.Errorf("excepted message %s but got %s", testCase.ExceptedLastLog, entry.Message)
-			}
+			assert.Equal(t, entry.Message, testCase.ExceptedLastLog)
 		})
 	}
 }

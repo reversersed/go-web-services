@@ -11,6 +11,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var userList = []*User{
@@ -71,22 +72,15 @@ func TestFindUser(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			user, err := service.FindUser(context.Background(), findUserCase.UserId, findUserCase.UserLogin)
 			if len(findUserCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
+				assert.Error(t, err)
 				e, ok := err.(*errormiddleware.Error)
 				if ok {
-					if e.Code != findUserCase.ErrorCode {
-						t.Errorf("excepeted code %s but got %s", findUserCase.ErrorCode, e.Code)
-					}
-				} else if findUserCase.ErrorCode != errormiddleware.InternalErrorCode {
-					t.Errorf("excepeted code %s (internal) but got %v", errormiddleware.InternalErrorCode, err)
-				}
-			} else {
-				if findUserCase.Excepted.Id != user.Id {
-					t.Errorf("excepeted user %v but got %v", findUserCase.Excepted, user)
+					assert.Equal(t, e.Code, findUserCase.ErrorCode)
+				} else {
+					assert.Equal(t, findUserCase.ErrorCode, errormiddleware.InternalErrorCode)
 				}
 			}
+			assert.Equal(t, findUserCase.Excepted, user)
 		})
 	}
 }
@@ -123,17 +117,12 @@ func TestUserEmailConfirmation(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			result, err := service.UserEmailConfirmation(context.Background(), userEmailCase.Code)
 			if len(userEmailCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
-				e := err.(*errormiddleware.Error)
-				if e.Code != userEmailCase.ErrorCode {
-					t.Errorf("excepeted code %s but got %s", userEmailCase.ErrorCode, e.Code)
-				}
+				assert.Error(t, err)
+				e, ok := err.(*errormiddleware.Error)
+				assert.True(t, ok)
+				assert.Equal(t, e.Code, userEmailCase.ErrorCode)
 			} else {
-				if userEmailCase.ExceptedStatus != result {
-					t.Errorf("excepeted status code %d but got %d", userEmailCase.ExceptedStatus, result)
-				}
+				assert.Equal(t, userEmailCase.ExceptedStatus, result)
 			}
 		})
 	}
@@ -181,24 +170,15 @@ func TestAuthByLoginAndPassword(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			user, err := service.AuthByLoginAndPassword(context.Background(), authUserCase.Query)
 			if len(authUserCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
+				assert.Error(t, err)
 				e, ok := err.(*errormiddleware.Error)
 				if ok {
-					if e.Code != authUserCase.ErrorCode {
-						t.Errorf("excepeted code %s but got %s", authUserCase.ErrorCode, e.Code)
-					}
-				} else if authUserCase.ErrorCode != errormiddleware.InternalErrorCode {
-					t.Errorf("excepeted code %s (internal) but got %v", errormiddleware.InternalErrorCode, err)
+					assert.Equal(t, e.Code, authUserCase.ErrorCode)
+				} else {
+					assert.Equal(t, authUserCase.ErrorCode, errormiddleware.InternalErrorCode)
 				}
-			} else {
-				if user == nil {
-					t.Fatalf("excepeted user but got nil")
-				}
-				if authUserCase.Excepted.Id != user.Id {
-					t.Fatalf("excepeted user id %s but got %s", authUserCase.Excepted.Id, user.Id)
-				}
+			} else if assert.NotNil(t, user) {
+				assert.Equal(t, authUserCase.Excepted.Id, user.Id)
 			}
 		})
 	}
@@ -246,24 +226,15 @@ func TestRegisterUser(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			user, err := service.RegisterUser(context.Background(), registerUserCase.Query)
 			if len(registerUserCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
+				assert.Error(t, err)
 				e, ok := err.(*errormiddleware.Error)
 				if ok {
-					if e.Code != registerUserCase.ErrorCode {
-						t.Errorf("excepeted code %s but got %s", registerUserCase.ErrorCode, e.Code)
-					}
-				} else if registerUserCase.ErrorCode != errormiddleware.InternalErrorCode {
-					t.Errorf("excepeted code %s (internal) but got %v", errormiddleware.InternalErrorCode, err)
+					assert.Equal(t, e.Code, registerUserCase.ErrorCode)
+				} else {
+					assert.Equal(t, registerUserCase.ErrorCode, errormiddleware.InternalErrorCode)
 				}
-			} else {
-				if user == nil {
-					t.Fatalf("excepeted user but got nil")
-				}
-				if registerUserCase.Excepted.Id != user.Id {
-					t.Fatalf("excepeted user id %s but got %s", registerUserCase.Excepted.Id, user.Id)
-				}
+			} else if assert.NotNil(t, user) {
+				assert.Equal(t, registerUserCase.Excepted.Id, user.Id)
 			}
 		})
 	}
@@ -304,21 +275,15 @@ func TestDeleteUser(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			err := service.DeleteUser(context.Background(), deleteUserCase.Query)
 			if len(deleteUserCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
+				assert.Error(t, err)
 				e, ok := err.(*errormiddleware.Error)
 				if ok {
-					if e.Code != deleteUserCase.ErrorCode {
-						t.Errorf("excepeted code %s but got %s", deleteUserCase.ErrorCode, e.Code)
-					}
-				} else if deleteUserCase.ErrorCode != errormiddleware.InternalErrorCode {
-					t.Errorf("excepeted code %s (internal) but got %v", errormiddleware.InternalErrorCode, err)
+					assert.Equal(t, e.Code, deleteUserCase.ErrorCode)
+				} else {
+					assert.Equal(t, deleteUserCase.ErrorCode, errormiddleware.InternalErrorCode)
 				}
 			} else {
-				if err != nil {
-					t.Errorf("excepeted error nil but got %v", err)
-				}
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -368,24 +333,15 @@ func TestUpdateUserLogin(t *testing.T) {
 			service := NewService(server.URL, "/users", logger)
 			user, err := service.UpdateUserLogin(context.Background(), updateUserLoginCase.Query)
 			if len(updateUserLoginCase.ErrorCode) > 0 {
-				if err == nil {
-					t.Error("excepted error but got nil")
-				}
+				assert.Error(t, err)
 				e, ok := err.(*errormiddleware.Error)
 				if ok {
-					if e.Code != updateUserLoginCase.ErrorCode {
-						t.Errorf("excepeted code %s but got %s", updateUserLoginCase.ErrorCode, e.Code)
-					}
-				} else if updateUserLoginCase.ErrorCode != errormiddleware.InternalErrorCode {
-					t.Errorf("excepeted code %s (internal) but got %v", errormiddleware.InternalErrorCode, err)
+					assert.Equal(t, e.Code, updateUserLoginCase.ErrorCode)
+				} else {
+					assert.Equal(t, updateUserLoginCase.ErrorCode, errormiddleware.InternalErrorCode)
 				}
-			} else {
-				if user == nil {
-					t.Fatalf("excepeted user but got nil")
-				}
-				if updateUserLoginCase.ExceptedLogin != user.Login {
-					t.Fatalf("excepeted user login %s but got %s", updateUserLoginCase.ExceptedLogin, user.Login)
-				}
+			} else if assert.NotNil(t, user) {
+				assert.Equal(t, updateUserLoginCase.ExceptedLogin, user.Login)
 			}
 		})
 	}

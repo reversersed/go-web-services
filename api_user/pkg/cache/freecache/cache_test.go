@@ -3,6 +3,8 @@ package freecache
 import (
 	"slices"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEntryCount(t *testing.T) {
@@ -12,22 +14,16 @@ func TestEntryCount(t *testing.T) {
 	cache.Set([]byte("2"), []byte("1"), 0)
 	cache.Set([]byte("3"), []byte("1"), 0)
 
-	if cache.EntryCount() != 3 {
-		t.Errorf("excepted entry count 3 but got %d", cache.EntryCount())
-	}
+	assert.Equal(t, cache.EntryCount(), int64(3))
 
 	cache.Set([]byte("0"), []byte("1"), 0)
 
-	if cache.EntryCount() != 4 {
-		t.Errorf("excepted entry count 4 but got %d", cache.EntryCount())
-	}
+	assert.Equal(t, cache.EntryCount(), int64(4))
 
 	cache.Delete([]byte("1"))
 	cache.Delete([]byte("2"))
 
-	if cache.EntryCount() != 2 {
-		t.Errorf("excepted entry count 2 but got %d", cache.EntryCount())
-	}
+	assert.Equal(t, cache.EntryCount(), int64(2))
 }
 func TestGetCache(t *testing.T) {
 	cache := NewCache(0)
@@ -35,16 +31,11 @@ func TestGetCache(t *testing.T) {
 	cache.Set([]byte("1"), []byte("512"), 0)
 
 	got, err := cache.Get([]byte("1"))
-	if err != nil {
-		t.Errorf("excepted value but got error %v", err)
-	}
-	if string(got) != "512" {
-		t.Errorf("excepted value 512 but got %s", string(got))
-	}
 
-	_, err = cache.Get([]byte("23123"))
-	if err == nil {
-		t.Error("excepted error but got nil")
+	if assert.NoError(t, err) {
+		assert.Equal(t, string(got), "512")
+		_, err = cache.Get([]byte("23123"))
+		assert.Error(t, err)
 	}
 }
 
@@ -57,9 +48,7 @@ func TestSetCache(t *testing.T) {
 	}
 
 	err := cache.Set([]byte("2"), body, 0)
-	if err == nil {
-		t.Error("excepted error but got nil")
-	}
+	assert.Error(t, err)
 }
 
 func BenchmarkCacheSet(b *testing.B) {

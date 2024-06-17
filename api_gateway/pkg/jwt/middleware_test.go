@@ -15,6 +15,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var testCases = []struct {
@@ -26,7 +27,7 @@ var testCases = []struct {
 }{
 	{"default user authorization", "userid", []string{"user"}, "", 200},
 	{"default admin authorization", "userid", []string{"user", "admin"}, "admin", 200},
-	{"admin authorization as user", "uid", []string{"user","admin"}, "", 200},
+	{"admin authorization as user", "uid", []string{"user", "admin"}, "", 200},
 	{"user authorization as admin", "uid", []string{"user"}, "admin", 403},
 }
 
@@ -40,9 +41,7 @@ func TestMiddleware(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			handler := service.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if key := r.Context().Value(rest.UserIdKey); key != testCase.Uid {
-					t.Fatalf("excepted user id %s but got %s", testCase.Uid, key)
-				}
+				assert.Equal(t, r.Context().Value(rest.UserIdKey), testCase.Uid)
 				w.WriteHeader(200)
 			}), testCase.RequiredRole)
 
@@ -51,18 +50,14 @@ func TestMiddleware(t *testing.T) {
 				Roles: testCase.UserRole,
 			}
 			token, err := service.GenerateAccessToken(u)
-			if err != nil {
-				t.Fatalf("excepted token but got error %v", err)
-			}
+			assert.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "http://test", nil)
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.Token))
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, req)
 
-			if response.Result().StatusCode != testCase.StatusCode {
-				t.Fatalf("excepted status code %d but got %d", testCase.StatusCode, response.Result().StatusCode)
-			}
+			assert.Equal(t, response.Result().StatusCode, testCase.StatusCode)
 		})
 	}
 }
@@ -78,9 +73,7 @@ func TestEmptyRequestMiddleware(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	handler.ServeHTTP(w, r)
-	if w.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
-	}
+	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }
 func TestNilKeyMiddleware(t *testing.T) {
 	log, _ := test.NewNullLogger()
@@ -110,9 +103,7 @@ func TestNilKeyMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
 	handler.ServeHTTP(w, r)
-	if w.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
-	}
+	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }
 func TestNilTokenMiddleware(t *testing.T) {
 	log, _ := test.NewNullLogger()
@@ -127,9 +118,7 @@ func TestNilTokenMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	r.Header.Add("Authorization", "Bearer ")
 	handler.ServeHTTP(w, r)
-	if w.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
-	}
+	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }
 func TestOldTokenMiddleware(t *testing.T) {
 	log, _ := test.NewNullLogger()
@@ -159,7 +148,5 @@ func TestOldTokenMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
 	handler.ServeHTTP(w, r)
-	if w.Result().StatusCode != http.StatusUnauthorized {
-		t.Fatalf("excepted status code 404, but got %d", w.Result().StatusCode)
-	}
+	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }

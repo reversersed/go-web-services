@@ -15,6 +15,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 // URL Builder Tests
@@ -108,21 +109,8 @@ func TestUrlBuilder(t *testing.T) {
 				Logger:  logger,
 			}
 			url, err := client.BuildURL(urlCase.Path, urlCase.Filters)
-			if err != nil {
-				if urlCase.Err != nil {
-					if urlCase.Err.Error() != err.Error() {
-						t.Fatalf("excepted error %s but got %s", urlCase.Err.Error(), err.Error())
-					}
-				} else {
-					t.Fatalf("excepted url but got error %v", err)
-				}
-			}
-			if urlCase.Err != nil && err == nil {
-				t.Fatalf("excepted error %s but got nil", urlCase.Err.Error())
-			}
-			if url != urlCase.Excepted && urlCase.Err == nil {
-				t.Errorf("excepted %s but got %s", urlCase.Excepted, url)
-			}
+			assert.Equal(t, err, urlCase.Err)
+			assert.Equal(t, url, urlCase.Excepted)
 		})
 	}
 }
@@ -133,9 +121,7 @@ func TestClientClose(t *testing.T) {
 	}
 	client.Close()
 
-	if client.HttpClient != nil {
-		t.Errorf("excepted http nil but got %v", client.HttpClient)
-	}
+	assert.Nil(t, client.HttpClient)
 }
 
 // Send Request Test
@@ -165,8 +151,12 @@ var requestCases = []struct {
 		Name:   "error returned",
 		Method: http.MethodDelete,
 		Body:   nil,
-		Err:    errors.New("Error code: IE-1111, Error: hi, Dev message: bad request"),
-		Code:   http.StatusBadRequest,
+		Err: CustomError{
+			Message:          []string{"hi"},
+			ErrorCode:        "IE-1111",
+			DeveloperMessage: "bad request",
+		},
+		Code: http.StatusBadRequest,
 	},
 }
 
@@ -205,35 +195,20 @@ func TestSendRequest(t *testing.T) {
 		t.Run(requestCase.Name, func(t *testing.T) {
 
 			req, err := http.NewRequest(requestCase.Method, server.URL, requestCase.Body)
-			if err != nil {
-				t.Fatalf("excepted response but got error %v", err)
-			}
+			assert.NoError(t, err)
+
 			response, err := client.SendRequest(req)
-			if err != nil {
-				t.Fatalf("excepted response but got error %v", err)
-			}
+			assert.NoError(t, err)
+
 			defer response.Body().Close()
-			if response.StatusCode() != requestCase.Code {
-				t.Fatalf("excepted status code %d but got %d", requestCase.Code, response.StatusCode())
-			}
+			assert.Equal(t, response.StatusCode(), requestCase.Code)
 			if !response.Valid {
-				if requestCase.Err == nil {
-					t.Fatalf("excepted response but got error %v", response.Error)
-				}
-				if response.Error.Error() != requestCase.Err.Error() {
-					t.Fatalf("excepted error %v but got %v", requestCase.Err.Error(), response.Error.Error())
-				}
+				assert.Equal(t, response.Error, requestCase.Err)
 			} else {
-				if requestCase.Err != nil {
-					t.Fatalf("excepted error %v but got response", requestCase.Err)
-				}
+				assert.NoError(t, requestCase.Err)
 				body, err := io.ReadAll(response.Body())
-				if err != nil {
-					t.Fatalf("excepted body but got error %v", err)
-				}
-				if string(body) != requestCase.Excepted {
-					t.Fatalf("excepted body %s but got %s", requestCase.Excepted, string(body))
-				}
+				assert.NoError(t, err)
+				assert.Equal(t, string(body), requestCase.Excepted)
 			}
 		})
 	}
@@ -248,9 +223,7 @@ func TestNilHttpClient(t *testing.T) {
 		HttpClient: nil,
 	}
 	_, err := client.SendRequest(nil)
-	if err == nil {
-		t.Fatal("excepted error but got nil")
-	}
+	assert.Error(t, err)
 }
 
 func TestEmptyRequest(t *testing.T) {
@@ -263,9 +236,7 @@ func TestEmptyRequest(t *testing.T) {
 	}
 	request, _ := http.NewRequest("", "", nil)
 	_, err := client.SendRequest(request)
-	if err == nil {
-		t.Fatal("excepted error but got nil")
-	}
+	assert.Error(t, err)
 }
 
 func TestUserHeader(t *testing.T) {
@@ -284,20 +255,13 @@ func TestUserHeader(t *testing.T) {
 	}
 	ctx := context.WithValue(context.Background(), UserIdKey, "userKeyId")
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, nil)
-	if err != nil {
-		t.Fatalf("excepted request but got %v", err)
-	}
+	assert.NoError(t, err)
 	response, err := client.SendRequest(request)
-	if err != nil {
-		t.Fatalf("excepted response but got %v", err)
-	}
+	assert.NoError(t, err)
+
 	type body struct{ User string }
 	var Body body
 	err = json.NewDecoder(response.Body()).Decode(&Body)
-	if err != nil {
-		t.Fatalf("excepted body but got %v", err)
-	}
-	if Body.User != "userKeyId" {
-		t.Fatalf("excepted response body userKeyId but got %s", Body.User)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, Body.User, "userKeyId")
 }

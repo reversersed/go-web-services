@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/validator"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestError(t *testing.T) {
@@ -16,14 +17,10 @@ func TestError(t *testing.T) {
 		DeveloperMessage: "this is test message",
 	}
 
-	if er.Error() != err.Error() {
-		t.Fatalf("excepted error to be equal got not")
-	}
+	assert.EqualError(t, err, er.Error())
 
 	bytes := err.Marshall()
-	if bytes == nil {
-		t.Fatalf("excepted marshalled error but got nil")
-	}
+	assert.NotNil(t, bytes)
 }
 
 var errorsCases = []struct {
@@ -42,9 +39,7 @@ var errorsCases = []struct {
 func TestErrorCodes(t *testing.T) {
 	for _, errorCase := range errorsCases {
 		t.Run(errorCase.Name, func(t *testing.T) {
-			if errorCase.Err.Code != errorCase.ExceptedCode {
-				t.Errorf("excepted code %s but got %s", errorCase.ExceptedCode, errorCase.Err.Code)
-			}
+			assert.Equal(t, errorCase.Err.Code, errorCase.ExceptedCode)
 		})
 	}
 }
@@ -66,18 +61,13 @@ var validationStruct = struct {
 
 func TestValidationError(t *testing.T) {
 	err := ValidationError(nil, "")
-	if err.Code != "IE-0001" {
-		t.Fatalf("excepted error code IE-0001 but got %s", err.Code)
-	}
+	assert.Equal(t, err.Code, InternalErrorCode)
+
 	errs := validator.New().Struct(validationStruct)
-	if errs == nil {
-		t.Fatalf("excepted error but got nil")
-	}
-	err = ValidationError(errs, "")
-	if err.Code != "IE-0004" {
-		t.Fatalf("excepted code IE-0004 but got %s", err.Code)
-	}
-	if fields := reflect.TypeOf(validationStruct).NumField(); fields != len(err.Message) {
-		t.Fatalf("excepted %d errors but got %d", fields, len(err.Message))
+	if assert.NotNil(t, errs) {
+		err = ValidationError(errs, "")
+
+		assert.Equal(t, err.Code, ValidationErrorCode)
+		assert.Equal(t, reflect.TypeOf(validationStruct).NumField(), len(err.Message), "excepted %d errors but got %d", reflect.TypeOf(validationStruct).NumField(), len(err.Message))
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/stretchr/testify/assert"
 )
 
 var cases = []struct {
@@ -36,11 +37,10 @@ func TestValidator(t *testing.T) {
 		t.Run(v.name, func(t *testing.T) {
 			err := valid.Var(v.field, v.tag)
 
-			if v.err && err == nil {
-				t.Error("excepted error but got nil")
-			}
-			if !v.err && err != nil {
-				t.Errorf("excepted error nil but got %s", err.Error())
+			if v.err {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -55,16 +55,11 @@ func TestFieldName(t *testing.T) {
 	valid := New()
 
 	err := valid.Struct(str)
-	if err == nil {
-		t.Error("excepted error but got nil")
-	} else {
-		errs, ok := err.(validator.ValidationErrors)
-		if !ok {
-			t.Errorf("excepted ok true but got %v", ok)
-		} else if errs[0].Field() != "field" {
-			t.Errorf("excepted field name field but got %s", errs[0].Field())
-		}
-	}
+	assert.Error(t, err)
+
+	errs, ok := err.(validator.ValidationErrors)
+	assert.True(t, ok)
+	assert.Equal(t, errs[0].Field(), "field")
 }
 
 type emptyFieldStruct struct {
@@ -76,14 +71,9 @@ func TestEmptyFieldName(t *testing.T) {
 	valid := New()
 
 	err := valid.Struct(str)
-	if err == nil {
-		t.Error("excepted error but got nil")
-	} else {
-		errs, ok := err.(validator.ValidationErrors)
-		if !ok {
-			t.Errorf("excepted ok true but got %v", ok)
-		} else if errs[0].Field() != "Field" {
-			t.Errorf("excepted field name Field but got %s", errs[0].Field())
-		}
-	}
+	assert.Error(t, err)
+
+	errs, ok := err.(validator.ValidationErrors)
+	assert.True(t, ok)
+	assert.Equal(t, errs[0].Field(), "Field")
 }

@@ -1,15 +1,16 @@
 package jwt
 
 import (
-	"errors"
 	"testing"
 
+	"github.com/cristalhq/jwt/v3"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var generateTokenCases = []struct {
@@ -32,7 +33,7 @@ var generateTokenCases = []struct {
 		Name:   "nil secret key",
 		User:   user.User{},
 		Secret: "",
-		Err:    errors.New("jwt: key is nil"),
+		Err:    jwt.Error("jwt: key is nil"),
 	},
 }
 
@@ -46,16 +47,10 @@ func TestGenerateToken(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			service := NewService(cache, logger, val, testCase.Secret)
 			response, err := service.GenerateAccessToken(&testCase.User)
-			if testCase.Err == nil && err != testCase.Err {
-				t.Fatalf("excepted error nil but got %v", err)
-			} else if testCase.Err != nil && err == nil {
-				t.Fatalf("excepted error %v but got nil", testCase.Err)
-			} else if testCase.Err != nil && err != nil && testCase.Err.Error() != err.Error() {
-				t.Fatalf("excepted error %v but got %v", testCase.Err, err)
-			}
 
-			if response != nil && response.Login != testCase.User.Login {
-				t.Fatalf("excepted login %s but got %s", testCase.User.Login, response.Login)
+			assert.Equal(t, testCase.Err, err)
+			if response != nil {
+				assert.Equal(t, response.Login, testCase.User.Login)
 			}
 		})
 	}
@@ -90,26 +85,17 @@ func TestUpdateToken(t *testing.T) {
 			service := NewService(cache, logger, val, testCase.Secret)
 
 			token, err := service.GenerateAccessToken(&testCase.User)
-			if err != nil {
-				t.Fatalf("excepted token but got error %v", err)
-			}
-			response, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
-			if testCase.Err == nil && err != testCase.Err {
-				t.Fatalf("excepted error nil but got %v", err)
-			} else if testCase.Err != nil && err == nil {
-				t.Fatalf("excepted error %v but got nil", testCase.Err)
-			} else if testCase.Err != nil && err != nil && testCase.Err.Error() != err.Error() {
-				t.Fatalf("excepted error %v but got %v", testCase.Err, err)
-			}
+			assert.NoError(t, err)
 
-			if response != nil && response.Login != testCase.User.Login {
-				t.Fatalf("excepted login %s but got %s", testCase.User.Login, response.Login)
+			response, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
+			assert.Equal(t, err, testCase.Err)
+
+			if response != nil {
+				assert.Equal(t, response.Login, testCase.User.Login)
 			}
 
 			_, err = service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
-			if err == nil {
-				t.Fatalf("excepted error but got nil")
-			}
+			assert.Error(t, err)
 		})
 	}
 }
@@ -122,9 +108,7 @@ func TestNilRefreshToken(t *testing.T) {
 	service := NewService(cache, logger, val, "secret")
 
 	_, err := service.UpdateRefreshToken(nil)
-	if err == nil {
-		t.Fatalf("excepted error but got nil")
-	}
+	assert.Error(t, err)
 }
 func TestWrongRefreshToken(t *testing.T) {
 	log, _ := test.NewNullLogger()
@@ -134,7 +118,5 @@ func TestWrongRefreshToken(t *testing.T) {
 	service := NewService(cache, logger, val, "secret")
 
 	_, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{})
-	if err == nil {
-		t.Fatalf("excepted error but got nil")
-	}
+	assert.Error(t, err)
 }

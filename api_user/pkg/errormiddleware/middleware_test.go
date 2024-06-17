@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/validator"
 )
 
@@ -38,26 +40,18 @@ func TestMiddleWareErrorCodes(t *testing.T) {
 				return nil
 			})
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+			r := httptest.NewRequest(http.MethodGet, "http://test", http.NoBody)
 			err := handler(w, r)
-			if w.Result().StatusCode != errorCase.ExceptedStatus {
-				t.Fatalf("excepted status code %d but got %d", errorCase.ExceptedStatus, w.Result().StatusCode)
-			}
-			if errorCase.Err != nil && err == nil {
-				t.Fatal("excepted error but got nil")
-			}
-			if errorCase.Err == nil && err == nil {
-				return
-			}
-			Err, errOk := err.(*Error)
-			Error, ErrorOk := errorCase.Err.(*Error)
-			if !errOk || !ErrorOk {
-				if err.Error() != errorCase.Err.Error() {
-					t.Errorf("excepted error %s but got %s", errorCase.Err.Error(), err.Error())
-				}
-			} else {
-				if Err.Code != Error.Code {
-					t.Errorf("excepeted error code %s but got %s", Error.Code, Err.Code)
+
+			assert.Equal(t, w.Result().StatusCode, errorCase.ExceptedStatus)
+			assert.Equal(t, errorCase.Err, err)
+			if err != nil {
+				Err, errOk := err.(*Error)
+				Error, ErrorOk := errorCase.Err.(*Error)
+				if !errOk || !ErrorOk {
+					assert.Equal(t, err.Error(), errorCase.Err.Error())
+				} else {
+					assert.Equal(t, Err.Code, Error.Code)
 				}
 			}
 		})
@@ -73,24 +67,17 @@ func TestValidationMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	err := handler(w, r)
 
-	if err == nil {
-		t.Fatal("excepted error but got nil")
-	}
-	if w.Result().StatusCode != http.StatusNotImplemented {
-		t.Fatalf("excepeted status code %d but got %d", http.StatusNotImplemented, w.Result().StatusCode)
-	}
+	assert.Error(t, err)
+	assert.Equal(t, w.Result().StatusCode, http.StatusNotImplemented)
+
 	Err, ok := err.(*Error)
-	if !ok {
-		t.Fatalf("excepted custom error but got %v", err)
-	}
-	if fields := reflect.TypeOf(validationStruct).NumField(); fields != len(Err.Message) {
-		t.Fatalf("excepted %d errors but got %d", fields, len(Err.Message))
-	}
+	assert.True(t, ok, "excepted custom error but got %v", err)
+
+	fields := reflect.TypeOf(validationStruct).NumField()
+	assert.Equal(t, fields, len(Err.Message), "excepted %d errors but got %d", fields, len(Err.Message))
+
 	var bodyError Error
-	if errs := json.NewDecoder(w.Result().Body).Decode(&bodyError); errs != nil {
-		t.Fatalf("excepted body error but got %v", errs)
-	}
-	if bodyError.Code != Err.Code {
-		t.Fatalf("excepeted body error code %s but got %s", Err.Code, bodyError.Code)
-	}
+	errs := json.NewDecoder(w.Result().Body).Decode(&bodyError)
+	assert.NoError(t, errs)
+	assert.Equal(t, bodyError.Code, Err.Code)
 }

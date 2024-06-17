@@ -19,6 +19,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var h *Handler
@@ -54,9 +55,8 @@ func TestRegister(t *testing.T) {
 	h.Register(router)
 	for _, registerCase := range registerCases {
 		t.Run(registerCase.Name, func(t *testing.T) {
-			if handler, _, _ := router.Lookup(registerCase.Method, registerCase.Path); handler == nil {
-				t.Errorf("handler %s (%s) with method %s not found", registerCase.Name, registerCase.Path, registerCase.Method)
-			}
+			handler, _, _ := router.Lookup(registerCase.Method, registerCase.Path)
+			assert.NotNil(t, handler, "handler %s (%s) with method %s not found", registerCase.Name, registerCase.Path, registerCase.Method)
 		})
 	}
 }
@@ -118,13 +118,15 @@ func TestHandlers(t *testing.T) {
 						return &byt
 					},
 					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errors.New("newlogin: field is required"),
+					ExceptedError:  errormiddleware.NewError([]string{"newlogin: field is required"}, errormiddleware.ValidationErrorCode, "wrong request"),
+					ExceptedBody:   "{\"messages\":[\"newlogin: field is required\"],\"dev_message\":\"wrong request\",\"code\":\"IE-0004\"}",
 				},
 				//Nil body
 				{
 					Name:           "nil body",
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("EOF"),
+					ExceptedBody:   "{\"messages\":[\"EOF\"],\"dev_message\":\"Something wrong happened while service executing\",\"code\":\"IE-0001\"}",
 				},
 				//User service error return
 				{
@@ -138,6 +140,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError, //middleware sets 500 when error is not custom
 					ExceptedError:  errors.New("error updating login"),
+					ExceptedBody:   "{\"messages\":[\"error updating login\"],\"dev_message\":\"Something wrong happened while service executing\",\"code\":\"IE-0001\"}",
 				},
 				//Jwt service error return
 				{
@@ -162,7 +165,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError, //middleware sets 500 when error is not custom
 					ExceptedError:  errors.New("jwt service error"),
-					ExceptedBody:   "",
+					ExceptedBody:   "{\"messages\":[\"jwt service error\"],\"dev_message\":\"Something wrong happened while service executing\",\"code\":\"IE-0001\"}",
 				},
 			},
 		},
@@ -191,6 +194,7 @@ func TestHandlers(t *testing.T) {
 					Name:           "nil body",
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("EOF"),
+					ExceptedBody:   `{"messages":["EOF"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Validation error returned
 				{
@@ -200,7 +204,8 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errors.New("password: field is required"),
+					ExceptedError:  errormiddleware.NewError([]string{"password: field is required"}, errormiddleware.ValidationErrorCode, "wrong request"),
+					ExceptedBody:   `{"messages":["password: field is required"],"dev_message":"wrong request","code":"IE-0004"}`,
 				},
 				//Service error returned
 				{
@@ -216,6 +221,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong password"),
+					ExceptedBody:   `{"messages":["wrong password"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -249,6 +255,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong email"),
+					ExceptedBody:   `{"messages":["wrong email"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Service wrong status code
 				{
@@ -258,6 +265,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("service responded with invalid status code: 500"),
+					ExceptedBody:   `{"messages":["service responded with invalid status code: 500"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -292,6 +300,7 @@ func TestHandlers(t *testing.T) {
 					Name:           "nil body",
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("EOF"),
+					ExceptedBody:   `{"messages":["EOF"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Validation error
 				{
@@ -301,7 +310,8 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errors.New("refreshtoken: field is required"),
+					ExceptedError:  errormiddleware.NewError([]string{"refreshtoken: field is required"}, errormiddleware.ValidationErrorCode, "wrong token format"),
+					ExceptedBody:   `{"messages":["refreshtoken: field is required"],"dev_message":"wrong token format","code":"IE-0004"}`,
 				},
 				//Service error
 				{
@@ -315,6 +325,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong token"),
+					ExceptedBody:   `{"messages":["wrong token"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -345,6 +356,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong id"),
+					ExceptedBody:   `{"messages":["wrong id"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -388,6 +400,7 @@ func TestHandlers(t *testing.T) {
 					Name:           "nil body",
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("EOF"),
+					ExceptedBody:   `{"messages":["EOF"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Validation error
 				{
@@ -397,7 +410,8 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errors.New("login: field is required, password: field is required"),
+					ExceptedError:  errormiddleware.NewError([]string{"login: field is required", "password: field is required"}, errormiddleware.ValidationErrorCode, "wrong query format"),
+					ExceptedBody:   `{"messages":["login: field is required","password: field is required"],"dev_message":"wrong query format","code":"IE-0004"}`,
 				},
 				//User service error
 				{
@@ -411,6 +425,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong password"),
+					ExceptedBody:   `{"messages":["wrong password"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Jwt service error
 				{
@@ -425,6 +440,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong model"),
+					ExceptedBody:   `{"messages":["wrong model"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -469,6 +485,7 @@ func TestHandlers(t *testing.T) {
 					Name:           "nil body",
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("EOF"),
+					ExceptedBody:   `{"messages":["EOF"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Validation error
 				{
@@ -478,7 +495,8 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errors.New("login: field is required, email: field is required, password: field is required"),
+					ExceptedError:  errormiddleware.NewError([]string{"login: field is required", "email: field is required", "password: field is required"}, errormiddleware.ValidationErrorCode, "wrong query format"),
+					ExceptedBody:   `{"messages":["login: field is required","email: field is required","password: field is required"],"dev_message":"wrong query format","code":"IE-0004"}`,
 				},
 				//User service error
 				{
@@ -496,6 +514,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("login already taken"),
+					ExceptedBody:   `{"messages":["login already taken"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 				//Jwt service error
 				{
@@ -514,6 +533,7 @@ func TestHandlers(t *testing.T) {
 					},
 					ExceptedStatus: http.StatusInternalServerError,
 					ExceptedError:  errors.New("wrong model"),
+					ExceptedBody:   `{"messages":["wrong model"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
 				},
 			},
 		},
@@ -539,27 +559,12 @@ func TestHandlers(t *testing.T) {
 					r = httptest.NewRequest(tt.Method, "http://test", nil)
 				}
 				err := errormiddleware.Middleware(tt.Handler)(w, r)
-				if testCase.ExceptedStatus != w.Result().StatusCode {
-					t.Fatalf("excepeted status code %d but got %d", testCase.ExceptedStatus, w.Result().StatusCode)
-				}
-				if testCase.ExceptedError != nil && err == nil {
-					t.Fatalf("excepeted error but got nil")
-				} else if testCase.ExceptedError != nil && err != nil {
-					if testCase.ExceptedError.Error() != err.Error() {
-						t.Fatalf("excepted error %v but got %v", testCase.ExceptedError, err)
-					}
-					return
-				}
-				if testCase.ExceptedError == nil && err != nil {
-					t.Fatalf("excepted error nil but got %v", err)
-				}
+				assert.Equal(t, testCase.ExceptedStatus, w.Result().StatusCode)
+				assert.Equal(t, testCase.ExceptedError, err)
 
 				body := w.Body.String()
-				if len(testCase.ExceptedBody) == 0 && len(body) != 0 {
-					t.Fatalf("excepted body to be nil but got %s", body)
-				}
-				if testCase.ExceptedBody != body {
-					t.Fatalf("excepted body %s but got %s", testCase.ExceptedBody, body)
+				if assert.Len(t, body, len(testCase.ExceptedBody)) {
+					assert.Equal(t, testCase.ExceptedBody, body)
 				}
 			})
 		}

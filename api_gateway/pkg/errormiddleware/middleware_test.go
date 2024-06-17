@@ -40,7 +40,7 @@ func TestMiddleWareErrorCodes(t *testing.T) {
 				return nil
 			})
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "http://test", nil)
+			r := httptest.NewRequest(http.MethodGet, "http://test", http.NoBody)
 			err := handler(w, r)
 
 			assert.Equal(t, w.Result().StatusCode, errorCase.ExceptedStatus)
@@ -67,24 +67,17 @@ func TestValidationMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
 	err := handler(w, r)
 
-	if err == nil {
-		t.Fatal("excepted error but got nil")
-	}
-	if w.Result().StatusCode != http.StatusNotImplemented {
-		t.Fatalf("excepeted status code %d but got %d", http.StatusNotImplemented, w.Result().StatusCode)
-	}
+	assert.Error(t, err)
+	assert.Equal(t, w.Result().StatusCode, http.StatusNotImplemented)
+
 	Err, ok := err.(*Error)
-	if !ok {
-		t.Fatalf("excepted custom error but got %v", err)
-	}
-	if fields := reflect.TypeOf(validationStruct).NumField(); fields != len(Err.Message) {
-		t.Fatalf("excepted %d errors but got %d", fields, len(Err.Message))
-	}
+	assert.True(t, ok, "excepted custom error but got %v", err)
+
+	fields := reflect.TypeOf(validationStruct).NumField()
+	assert.Equal(t, fields, len(Err.Message), "excepted %d errors but got %d", fields, len(Err.Message))
+
 	var bodyError Error
-	if errs := json.NewDecoder(w.Result().Body).Decode(&bodyError); errs != nil {
-		t.Fatalf("excepted body error but got %v", errs)
-	}
-	if bodyError.Code != Err.Code {
-		t.Fatalf("excepeted body error code %s but got %s", Err.Code, bodyError.Code)
-	}
+	errs := json.NewDecoder(w.Result().Body).Decode(&bodyError)
+	assert.NoError(t, errs)
+	assert.Equal(t, bodyError.Code, Err.Code)
 }

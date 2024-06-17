@@ -50,8 +50,8 @@ upgrade:
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy
 	
-	@make test; \
-	if [ $$? -ne 0 ]; \
+	-@$(MAKE) test
+	@if [ $$? -ne 0 ]; \
     then \
         echo "*** Tests are failed, canceling the upgrade ***"; \
 		git reset; \
