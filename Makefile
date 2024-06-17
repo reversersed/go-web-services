@@ -8,7 +8,7 @@ run:
 	@echo start - full application starting [run tests and docker]
 	@echo deps - install project depedencies
 	@echo down - down the docker containers
-	@echo upgrade - upgrade and download all depedencies, then run tests [if tests are failed, changes will be canceled]
+	@echo upgrade - upgrade and download all depedencies, then run tests
 	@echo ! When running make test make sure docker is up
 	@echo Example starting usage: make gen start
 
@@ -73,21 +73,5 @@ upgrade:
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy
 	
-	-@$(MAKE) test-verbose
-ifeq ($(OS),Windows_NT)
-	ifneq %errorlevel% 0
-	    echo "*** Tests are failed, canceling the upgrade ***"
-		git reset
-		git checkout .
-		false
-	endif
-else
-	@if [ $$? -ne 0 ]; \
-    then \
-        echo "*** Tests are failed, canceling the upgrade ***"; \
-		git reset; \
-		git checkout .; \
-        false; \
-    fi
-endif
-	@echo All depedencies upgraded successfully;
+	@$(MAKE) test-verbose
+	@echo All depedencies upgraded successfully
