@@ -33,21 +33,11 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 	}
 }
 func (c *client) FindUser(ctx context.Context, userid string, login string) (*User, error) {
-	var filter []rest.FilterOptions
+	filter := make(map[string][]string, 1)
 	if len(userid) > 0 {
-		filter = []rest.FilterOptions{
-			{
-				Field:  "id",
-				Values: []string{userid},
-			},
-		}
+		filter["id"] = []string{userid}
 	} else if len(login) > 0 {
-		filter = []rest.FilterOptions{
-			{
-				Field:  "login",
-				Values: []string{login},
-			},
-		}
+		filter["login"] = []string{login}
 	} else {
 		return nil, errormiddleware.BadRequestError([]string{"query has to have one of parameters", "login: user login", "id: user id"}, "bad request provided")
 	}
@@ -82,11 +72,8 @@ func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, e
 	var uri string
 	var err error
 	if len(code) > 0 {
-		filter := []rest.FilterOptions{
-			{
-				Field:  "code",
-				Values: []string{code},
-			},
+		filter := map[string][]string{
+			"code": {code},
 		}
 		uri, err = c.base.BuildURL(c.Path+"/email", filter)
 	} else {

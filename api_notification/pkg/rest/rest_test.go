@@ -24,7 +24,7 @@ var urlBilderCases = []struct {
 	Name     string
 	Url      string
 	Path     string
-	Filters  []FilterOptions
+	Filters  map[string][]string
 	Err      error
 	Excepted string
 }{
@@ -32,60 +32,44 @@ var urlBilderCases = []struct {
 		Name:     "Empty url test",
 		Url:      "http://localhost:0000",
 		Path:     "",
-		Filters:  []FilterOptions{},
+		Filters:  nil,
 		Excepted: "http://localhost:0000",
 	},
 	{
 		Name:     "Empty filter test",
 		Url:      "http://localhost:0000",
 		Path:     "/testing",
-		Filters:  []FilterOptions{},
+		Filters:  nil,
 		Excepted: "http://localhost:0000/testing",
 	},
 	{
 		Name:     "Empty filter test without slash",
 		Url:      "http://localhost:0000",
 		Path:     "testing",
-		Filters:  []FilterOptions{},
+		Filters:  nil,
 		Excepted: "http://localhost:0000/testing",
 	},
 	{
-		Name: "Single filter test",
-		Url:  "http://localhost:0000",
-		Path: "/testing",
-		Filters: []FilterOptions{
-			{
-				Field:  "id",
-				Values: []string{"test"},
-			},
-		},
+		Name:     "Single filter test",
+		Url:      "http://localhost:0000",
+		Path:     "/testing",
+		Filters:  map[string][]string{"id": {"test"}},
 		Excepted: "http://localhost:0000/testing?id=test",
 	},
 	{
-		Name: "Single filter test with multiple values",
-		Url:  "http://localhost:0000",
-		Path: "/testing",
-		Filters: []FilterOptions{
-			{
-				Field:  "id",
-				Values: []string{"test", "second", "any"},
-			},
-		},
+		Name:     "Single filter test with multiple values",
+		Url:      "http://localhost:0000",
+		Path:     "/testing",
+		Filters:  map[string][]string{"id": {"test", "second", "any"}},
 		Excepted: "http://localhost:0000/testing?id=test%2Csecond%2Cany",
 	},
 	{
 		Name: "Multiple filter test with multiple values",
 		Url:  "http://localhost:0000",
 		Path: "/testing",
-		Filters: []FilterOptions{
-			{
-				Field:  "id",
-				Values: []string{"test", "second", "any"},
-			},
-			{
-				Field:  "name",
-				Values: []string{"Alice", "Gray"},
-			},
+		Filters: map[string][]string{
+			"id":   {"test", "second", "any"},
+			"name": {"Alice", "Gray"},
 		},
 		Excepted: "http://localhost:0000/testing?id=test%2Csecond%2Cany&name=Alice%2CGray",
 	},
@@ -93,7 +77,7 @@ var urlBilderCases = []struct {
 		Name:    "Wrong http url",
 		Url:     "wrongurl",
 		Path:    "testing",
-		Filters: []FilterOptions{},
+		Filters: nil,
 		Err:     errors.New("failed to parse url: parse \"wrongurl\": invalid URI for request"),
 	},
 }

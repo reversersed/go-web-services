@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 )
@@ -58,7 +59,7 @@ func (c *RestClient) SendRequest(r *http.Request) (*CustomResponse, error) {
 	}
 	return &resp, nil
 }
-func (c *RestClient) BuildURL(way string, filters []FilterOptions) (string, error) {
+func (c *RestClient) BuildURL(way string, filters map[string][]string) (string, error) {
 	parsed, err := url.ParseRequestURI(c.BaseURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse url: %v", err)
@@ -67,8 +68,8 @@ func (c *RestClient) BuildURL(way string, filters []FilterOptions) (string, erro
 
 	if len(filters) > 0 {
 		q := parsed.Query()
-		for _, opt := range filters {
-			q.Set(opt.Field, opt.ToString())
+		for key, values := range filters {
+			q.Set(key, strings.Join(values, ","))
 		}
 		parsed.RawQuery = q.Encode()
 	}

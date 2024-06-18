@@ -48,11 +48,8 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 		s.logger.Error(err)
 	}
 	if !exist {
-		filter := []rest.FilterOptions{
-			{
-				Field:  "id",
-				Values: []string{query.UserId},
-			},
+		filter := map[string][]string{
+			"id": {query.UserId},
 		}
 		uri, err := s.restClient.BuildURL("/users", filter)
 		if err != nil {
