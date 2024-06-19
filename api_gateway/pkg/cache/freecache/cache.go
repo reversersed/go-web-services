@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/coocood/freecache"
-	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
 )
 
 type cacherepo struct {
@@ -12,7 +11,7 @@ type cacherepo struct {
 	cache *freecache.Cache
 }
 
-func NewCache(size int) cache.Cache {
+func NewCache(size int) *cacherepo {
 	return &cacherepo{cache: freecache.NewCache(size)}
 }
 func (c *cacherepo) EntryCount() int64 {
