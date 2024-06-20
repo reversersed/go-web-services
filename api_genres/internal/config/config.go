@@ -1,0 +1,57 @@
+package config
+
+import (
+	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/reversersed/go-web-services/tree/main/api_genres/pkg/logging"
+)
+
+type ServerConfig struct {
+	ListenAddress string `env:"HOST" env-required:"true"`
+	ListenPort    int    `env:"PORT" env-required:"true"`
+	Environment   string `env:"ENVIRONMENT"`
+}
+type DatabaseConfig struct {
+	Db_Host string `env:"DB_HOST" env-required:"true"`
+	Db_Base string `env:"DB_BASE" env-required:"true"`
+	Db_Port int    `env:"DB_PORT" env-required:"true"`
+	Db_Name string `env:"DB_NAME"`
+	Db_Pass string `env:"DB_PASS"`
+	Db_Auth string `env:"DB_AUTHDB"`
+}
+type Config struct {
+	Server   *ServerConfig
+	Database *DatabaseConfig
+}
+
+var cfg *Config
+var once sync.Once
+
+func GetConfig() *Config {
+	once.Do(func() {
+		logger := logging.GetLogger()
+		logger.Info("reading api config...")
+		srvCfg := &ServerConfig{}
+		dbCfg := &DatabaseConfig{}
+
+		if err := cleanenv.ReadConfig("config/.env", srvCfg); err != nil {
+			desc, _ := cleanenv.GetDescription(cfg, nil)
+			logger.Error(desc)
+			logger.Fatal(err)
+		}
+		if len(srvCfg.Environment) == 0 {
+			srvCfg.Environment = "debug"
+		}
+		if err := cleanenv.ReadConfig("config/.env", dbCfg); err != nil {
+			desc, _ := cleanenv.GetDescription(cfg, nil)
+			logger.Error(desc)
+			logger.Fatal(err)
+		}
+		cfg = &Config{
+			Server:   srvCfg,
+			Database: dbCfg,
+		}
+	})
+	return cfg
+}
