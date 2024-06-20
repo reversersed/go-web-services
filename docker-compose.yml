@@ -87,3 +87,27 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - api_gateway
+
+  api_authors:
+    image: api_authors
+    volumes:
+      - ./api_authors/logs:/logs
+      - ./api_authors/config:/config
+    user: root
+    build:
+      context: ./api_authors
+      dockerfile: ./Dockerfile
+    depends_on:
+      - api_gateway
+
+  api_genres:
+    image: api_genres
+    volumes:
+      - ./api_genres/logs:/logs
+      - ./api_genres/config:/config
+    user: root
+    build:
+      context: ./api_genres
+      dockerfile: ./Dockerfile
+    depends_on:
+      - api_gateway

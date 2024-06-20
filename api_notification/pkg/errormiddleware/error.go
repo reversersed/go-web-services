@@ -35,7 +35,7 @@ func NewError(message []string, code Code, dev_message string) *Error {
 }
 
 func (e *Error) Error() string {
-	return strings.Join(e.Message, ", ")
+	return fmt.Sprintf("Error code: %s, Error: %s, Dev message: %s", e.Code, strings.Join(e.Message, ", "), e.DeveloperMessage)
 }
 
 func (e *Error) Marshall() []byte {

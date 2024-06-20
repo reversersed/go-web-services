@@ -43,13 +43,19 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 		return
 	}
 	if err := s.validator.Struct(query); err != nil {
-		s.logger.Errorf("received wrong notification query: %v", errormiddleware.ValidationError(err.(validator.ValidationErrors), "").Error())
+		s.logger.Error(errormiddleware.ValidationError(err.(validator.ValidationErrors), "received wrong notification query"))
 		return
 	}
 
-	exist, err := s.storage.IsUserExists(cntx, query.UserId)
-	if err != nil {
-		s.logger.Error(err)
+	exist := true
+	var err error
+	_, existErr := s.cache.Get([]byte(query.UserId))
+	if existErr != nil {
+		exist, err = s.storage.IsUserExists(cntx, query.UserId)
+		if err != nil {
+			s.logger.Error(err)
+			return
+		}
 	}
 	if !exist {
 		filter := map[string][]string{
@@ -86,6 +92,7 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 		err = s.storage.CreateUser(cntx, query.UserId, u.Login)
 		if err != nil {
 			s.logger.Errorf("Error while creating user: %v", err)
+			return
 		}
 	}
 	err = s.storage.SendNotification(cntx, &Notification{Content: query.Content, Type: query.Type}, query.UserId)
@@ -93,6 +100,7 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 		s.logger.Errorf("Error sending notification: %v", err)
 		return
 	}
+	s.cache.Set([]byte(query.UserId), []byte(""), int(time.Hour))
 	s.logger.Infof("Notification %s sended to user %s (Content: %s)", query.Type, query.UserId, query.Content)
 }
 func (s *service) OnUserDeleted(ctx context.Context, userid string) {

@@ -16,7 +16,7 @@ test-verbose:
 	@cd ./api_gateway/ && go generate ./... && go test ./... -v
 	@cd ./api_user/ && go generate ./... && go test ./... -v
 	@cd ./api_notification/ && go generate ./... && go test ./... -v
-	@cd ./api_book/ && go generate ./... && go test ./... -v
+	@cd ./api_books/ && go generate ./... && go test ./... -v
 	@cd ./api_genres/ && go generate ./... && go test ./... -v
 	@cd ./api_authors/ && go generate ./... && go test ./... -v
 
@@ -24,7 +24,7 @@ test: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
-	@cd ./api_book/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_books/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_authors/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_genres/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 
@@ -32,7 +32,7 @@ test-unit: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_user/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_notification/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
-	@cd ./api_book/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_books/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_authors/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_genres/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 
@@ -41,14 +41,14 @@ ifeq ($(OS),Windows_NT)
 	@cd ./api_gateway/ && mkdir tests & echo.
 	@cd ./api_user/ && mkdir tests & echo.
 	@cd ./api_notification/ && mkdir tests & echo.
-	@cd ./api_book/ && mkdir tests & echo.
+	@cd ./api_books/ && mkdir tests & echo.
 	@cd ./api_authors/ && mkdir tests & echo.
 	@cd ./api_genres/ && mkdir tests & echo.
 else
 	@cd ./api_gateway/ && mkdir -p tests
 	@cd ./api_user/ && mkdir -p tests
 	@cd ./api_notification/ && mkdir -p tests
-	@cd ./api_book/ && mkdir -p tests
+	@cd ./api_books/ && mkdir -p tests
 	@cd ./api_authors/ && mkdir tests & echo.
 	@cd ./api_genres/ && mkdir tests & echo.
 endif
@@ -58,7 +58,7 @@ gen:
 	@cd ./api_gateway/ && go generate ./...
 	@cd ./api_user/ && go generate ./...
 	@cd ./api_notification/ && go generate ./...
-	@cd ./api_book/ && go generate ./...
+	@cd ./api_books/ && go generate ./...
 	@cd ./api_authors/ && go generate ./...
 	@cd ./api_genres/ && go generate ./...
 
@@ -79,7 +79,7 @@ deps:
 	@cd ./api_gateway/ && go mod tidy
 	@cd ./api_notification/ && go mod tidy
 	@cd ./api_user/ && go mod tidy
-	@cd ./api_book/ && go mod tidy
+	@cd ./api_books/ && go mod tidy
 	@cd ./api_authors/ && go mod tidy
 	@cd ./api_genres/ && go mod tidy
 ifneq ($(OS), Windows_NT)
@@ -93,7 +93,7 @@ upgrade:
 	@cd ./api_gateway/ && go get -u ./... && go mod tidy
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy
-	@cd ./api_book/ && go get -u ./... && go mod tidy
+	@cd ./api_books/ && go get -u ./... && go mod tidy
 	@cd ./api_authors/ && go get -u ./... && go mod tidy
 	@cd ./api_genres/ && go get -u ./... && go mod tidy
 	
