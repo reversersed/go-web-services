@@ -22,14 +22,12 @@ test-verbose:
 	@cd ./api_authors/ && go generate ./... && go test ./... -v
 
 test-race:
-	@go env -w CGO_ENABLED=1
 	@cd ./api_gateway/ && go generate ./... && go test ./... --race
 	@cd ./api_user/ && go generate ./... && go test ./... --race
 	@cd ./api_notification/ && go generate ./... && go test ./... --race
 	@cd ./api_books/ && go generate ./... && go test ./... --race
 	@cd ./api_genres/ && go generate ./... && go test ./... --race
 	@cd ./api_authors/ && go generate ./... && go test ./... --race
-	@go env -w CGO_ENABLED=0
 
 test: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
