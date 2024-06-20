@@ -56,7 +56,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
 	notifReceiver := receivers.NewNotificationReceiver(rabbit.Connection, validator, logger, service)
 	notifReceiver.Start()
 

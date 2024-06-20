@@ -38,6 +38,10 @@ func (s *service) SendNotification(ctx context.Context, query *SendNotificationM
 	cntx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	if query == nil {
+		s.logger.Error("received nil query")
+		return
+	}
 	if err := s.validator.Struct(query); err != nil {
 		s.logger.Errorf("received wrong notification query: %v", errormiddleware.ValidationError(err.(validator.ValidationErrors), "").Error())
 		return
