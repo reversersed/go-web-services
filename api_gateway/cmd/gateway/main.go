@@ -90,7 +90,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Server
 		ReadTimeout:  15 * time.Second,
 	}
 
-	go shutdown.Graceful([]os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
+	go shutdown.Graceful(logger, []os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
 		server)
 
 	logger.Infof("application initialized and started as %s", cfg.Environment)

@@ -11,16 +11,17 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client/db"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/config"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/handlers/user"
-	"github.com/reversersed/go-web-services/tree/main/api_user/internal/rabbitmq"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/cache/freecache"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/mongo"
-	RabbitClient "github.com/reversersed/go-web-services/tree/main/api_user/pkg/rabbitmq"
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/shutdown"
+	"github.com/reversersed/go-web-services/tree/main/api_book/internal/client"
+	"github.com/reversersed/go-web-services/tree/main/api_book/internal/client/db"
+	"github.com/reversersed/go-web-services/tree/main/api_book/internal/config"
+	"github.com/reversersed/go-web-services/tree/main/api_book/internal/handlers/book"
+	"github.com/reversersed/go-web-services/tree/main/api_book/internal/rabbitmq"
+	"github.com/reversersed/go-web-services/tree/main/api_book/pkg/cache/freecache"
+	"github.com/reversersed/go-web-services/tree/main/api_book/pkg/logging"
+	"github.com/reversersed/go-web-services/tree/main/api_book/pkg/mongo"
+	RabbitClient "github.com/reversersed/go-web-services/tree/main/api_book/pkg/rabbitmq"
+	"github.com/reversersed/go-web-services/tree/main/api_book/pkg/shutdown"
+	"github.com/reversersed/go-web-services/tree/main/api_book/pkg/validator"
 )
 
 func main() {
@@ -50,12 +51,12 @@ func main() {
 	rabbitSender := rabbitmq.NewSender(rabbit.Connection, logger)
 
 	logger.Info("services initializing...")
-	user_storage := db.NewStorage(db_client, config.Database.Db_Base, logger)
-	user_service := client.NewService(user_storage, logger, cache, rabbitSender)
+	bookStorage := db.NewStorage(db_client, "books", logger)
+	bookService := client.NewService(bookStorage, logger, cache, validator.New())
 
 	logger.Info("handlers registration...")
-	userHandler := user.Handler{Logger: logger, UserService: user_service}
-	userHandler.Register(router)
+	handler := book.Handler{Logger: logger, BookService: bookService}
+	handler.Register(router)
 
 	logger.Info("starting application...")
 	start(router, logger, config.Server, rabbit, rabbitSender)

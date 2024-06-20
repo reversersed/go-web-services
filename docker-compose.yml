@@ -75,3 +75,15 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - api_gateway
+
+  api_book:
+    image: api_book
+    volumes:
+      - ./api_book/logs:/logs
+      - ./api_book/config:/config
+    user: root
+    build:
+      context: ./api_book
+      dockerfile: ./Dockerfile
+    depends_on:
+      - api_gateway

@@ -4,13 +4,14 @@ import (
 	"io"
 	"os"
 	"os/signal"
-
-	"github.com/reversersed/go-web-services/tree/main/api_user/pkg/logging"
 )
 
-func Graceful(signals []os.Signal, closeItems ...io.Closer) {
-	logger := logging.GetLogger()
+type logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
 
+func Graceful(logger logger, signals []os.Signal, closeItems ...io.Closer) {
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, signals...)
 	sig := <-sigc

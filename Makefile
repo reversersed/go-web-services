@@ -16,26 +16,31 @@ test-verbose:
 	@cd ./api_gateway/ && go generate ./... && go test ./... -v
 	@cd ./api_user/ && go generate ./... && go test ./... -v
 	@cd ./api_notification/ && go generate ./... && go test ./... -v
+	@cd ./api_book/ && go generate ./... && go test ./... -v
 
 test: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_user/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_notification/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_book/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 
 test-unit: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_user/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t User-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 	@cd ./api_notification/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
+	@cd ./api_book/ && go generate ./... && go test ./... -short -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Notification-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
 
 test-folder-creation:
 ifeq ($(OS),Windows_NT)
 	@cd ./api_gateway/ && mkdir tests & echo.
 	@cd ./api_user/ && mkdir tests & echo.
 	@cd ./api_notification/ && mkdir tests & echo.
+	@cd ./api_book/ && mkdir tests & echo.
 else
 	@cd ./api_gateway/ && mkdir -p tests
 	@cd ./api_user/ && mkdir -p tests
 	@cd ./api_notification/ && mkdir -p tests
+	@cd ./api_book/ && mkdir -p tests
 endif
 
 gen:
@@ -43,6 +48,7 @@ gen:
 	@cd ./api_gateway/ && go generate ./...
 	@cd ./api_user/ && go generate ./...
 	@cd ./api_notification/ && go generate ./...
+	@cd ./api_book/ && go generate ./...
 
 stop:
 	@docker compose stop
@@ -61,6 +67,7 @@ deps:
 	@cd ./api_gateway/ && go mod tidy
 	@cd ./api_notification/ && go mod tidy
 	@cd ./api_user/ && go mod tidy
+	@cd ./api_book/ && go mod tidy
 ifneq ($(OS), Windows_NT)
 	@export PATH=$(PATH):$(HOME)/go/bin
 endif
@@ -72,6 +79,7 @@ upgrade:
 	@cd ./api_gateway/ && go get -u ./... && go mod tidy
 	@cd ./api_user/ && go get -u ./... && go mod tidy
 	@cd ./api_notification/ && go get -u ./... && go mod tidy
+	@cd ./api_book/ && go get -u ./... && go mod tidy
 	
 	@$(MAKE) test-verbose
 	@echo All depedencies upgraded successfully
