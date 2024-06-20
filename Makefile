@@ -3,6 +3,7 @@ run:
 	@echo test - run full tests [unit+intergration] and create coverage files
 	@echo test-unit - run only unit-tests [no intergration] and create coverage files
 	@echo test-verbose - run full tests with -v console output
+	@echo test-race - run tests with --race flag (check for data race)
 	@echo gen - [re]generage swagger documentation and mocks
 	@echo stop - stopping docker containers
 	@echo start - full application starting [run tests and docker]
@@ -19,6 +20,14 @@ test-verbose:
 	@cd ./api_books/ && go generate ./... && go test ./... -v
 	@cd ./api_genres/ && go generate ./... && go test ./... -v
 	@cd ./api_authors/ && go generate ./... && go test ./... -v
+
+test-race:
+	@cd ./api_gateway/ && go generate ./... && go test ./... --race
+	@cd ./api_user/ && go generate ./... && go test ./... --race
+	@cd ./api_notification/ && go generate ./... && go test ./... --race
+	@cd ./api_books/ && go generate ./... && go test ./... --race
+	@cd ./api_genres/ && go generate ./... && go test ./... --race
+	@cd ./api_authors/ && go generate ./... && go test ./... --race
 
 test: test-folder-creation
 	@cd ./api_gateway/ && go generate ./... && go test ./... -coverprofile=tests/coverage -coverpkg=./... -json | go-test-report -o tests/report.html -t Gateway-Testing-Results && go tool cover -func=tests/coverage -o tests/coverage.func && go tool cover -html=tests/coverage -o tests/coverage.html
@@ -38,19 +47,19 @@ test-unit: test-folder-creation
 
 test-folder-creation:
 ifeq ($(OS),Windows_NT)
-	@cd ./api_gateway/ && mkdir tests & echo.
-	@cd ./api_user/ && mkdir tests & echo.
-	@cd ./api_notification/ && mkdir tests & echo.
-	@cd ./api_books/ && mkdir tests & echo.
-	@cd ./api_authors/ && mkdir tests & echo.
-	@cd ./api_genres/ && mkdir tests & echo.
+	@cd ./api_gateway/ && mkdir tests
+	@cd ./api_user/ && mkdir tests
+	@cd ./api_notification/ && mkdir tests
+	@cd ./api_books/ && mkdir tests
+	@cd ./api_authors/ && mkdir tests
+	@cd ./api_genres/ && mkdir tests
 else
 	@cd ./api_gateway/ && mkdir -p tests
 	@cd ./api_user/ && mkdir -p tests
 	@cd ./api_notification/ && mkdir -p tests
 	@cd ./api_books/ && mkdir -p tests
-	@cd ./api_authors/ && mkdir tests & echo.
-	@cd ./api_genres/ && mkdir tests & echo.
+	@cd ./api_authors/ && mkdir -p tests
+	@cd ./api_genres/ && mkdir -p tests
 endif
 
 gen:
