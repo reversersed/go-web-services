@@ -13,7 +13,11 @@ type ServerConfig struct {
 	Environment   string `env:"ENVIRONMENT"`
 }
 type UrlConfig struct {
-	UserServiceURL string `env:"SRV_URL_USER" env-required:"true"`
+	UserServiceURL    string `env:"SRV_URL_USER" env-required:"true"`
+	NotifServiceURL   string `env:"SRV_URL_NOTIF" env-required:"true"`
+	BookServiceURL    string `env:"SRV_URL_BOOKS" env-required:"true"`
+	AuthorsServiceURL string `env:"SRV_URL_AUTHORS" env-required:"true"`
+	GenresServiceURL  string `env:"SRV_URL_GENRES" env-required:"true"`
 }
 type JwtConfig struct {
 	SecretToken string `env:"JWT_SECRET" env-required:"true"`
