@@ -63,10 +63,12 @@ func (s *jwtService) Middleware(h http.HandlerFunc, roles ...string) http.Handle
 	}
 }
 func unauthorized(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusUnauthorized)
 	w.Write(errormiddleware.UnauthorizedError([]string{err.Error()}, "unauthorized due to error, check logs").Marshall())
 }
 func forbidden(w http.ResponseWriter, errors []string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusForbidden)
 	w.Write(errormiddleware.ForbiddenError(errors, "user rights forbidden").Marshall())
 }

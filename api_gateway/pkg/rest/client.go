@@ -29,7 +29,9 @@ func (c *RestClient) SendRequest(r *http.Request) (*CustomResponse, error) {
 		return nil, errors.New("no http client registered")
 	}
 	r.Header.Set("Accept", "*/*")
-	r.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if r.Header.Get("Content-Type") == "" {
+		r.Header.Set("Content-Type", "application/json; charset=utf-8")
+	}
 
 	c.Logger.Infof("sending requiest to %s", r.URL)
 	//reading userid from context and adding it to header

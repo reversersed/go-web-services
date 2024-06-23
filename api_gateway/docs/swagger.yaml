@@ -2,6 +2,38 @@ basePath: /api/v1/
 consumes:
 - application/json
 definitions:
+  author.Author:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    required:
+    - id
+    type: object
+  book.Book:
+    properties:
+      author:
+        $ref: '#/definitions/author.Author'
+      cover:
+        description: Name of cover file
+        type: string
+      file:
+        description: Name of book file
+        type: string
+      genres:
+        items:
+          $ref: '#/definitions/genre.Genre'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      pages:
+        type: integer
+      year:
+        type: integer
+    type: object
   errormiddleware.Code:
     enum:
     - IE-0001
@@ -30,6 +62,15 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  genre.Genre:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    required:
+    - id
     type: object
   user.DeleteUserQuery:
     properties:
@@ -120,6 +161,82 @@ info:
   title: API
   version: "1.0"
 paths:
+  /books:
+    post:
+      parameters:
+      - description: primitive object id to author of book
+        in: formData
+        name: authorid
+        required: true
+        type: string
+      - description: Must be an image file to book cover
+        format: binary
+        in: formData
+        name: cover
+        required: true
+        type: string
+      - description: Must be a .pdf file to book
+        format: binary
+        in: formData
+        name: file
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Array of genre's Id's (must be primitive object id)
+        in: formData
+        items:
+          type: string
+        name: genres
+        required: true
+        type: array
+      - description: Book's name. Must be unique
+        in: formData
+        maxLength: 32
+        minLength: 4
+        name: name
+        required: true
+        type: string
+      - description: Total number of pages in pdf file
+        in: formData
+        maximum: 5000
+        name: pages
+        required: true
+        type: integer
+      - in: formData
+        maximum: 2100
+        minimum: 1400
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful response. Added book
+          schema:
+            $ref: '#/definitions/book.Book'
+        "400":
+          description: Return's if some fields was missing
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "401":
+          description: Return's if service can't authorize user or user's rights
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Returns if query was incorrect
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Creates a new book
+      tags:
+      - books
   /users:
     get:
       description: Get user using Id or login, both params are optional, but one of

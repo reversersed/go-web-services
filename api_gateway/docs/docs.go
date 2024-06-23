@@ -18,6 +18,115 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/books": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Creates a new book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "primitive object id to author of book",
+                        "name": "authorid",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "Must be an image file to book cover",
+                        "name": "cover",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "Must be a .pdf file to book",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Array of genre's Id's (must be primitive object id)",
+                        "name": "genres",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 32,
+                        "minLength": 4,
+                        "type": "string",
+                        "description": "Book's name. Must be unique",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maximum": 5000,
+                        "type": "integer",
+                        "description": "Total number of pages in pdf file",
+                        "name": "pages",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maximum": 2100,
+                        "minimum": 1400,
+                        "type": "integer",
+                        "name": "year",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response. Added book",
+                        "schema": {
+                            "$ref": "#/definitions/book.Book"
+                        }
+                    },
+                    "400": {
+                        "description": "Return's if some fields was missing",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Return's if service can't authorize user or user's rights",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "501": {
+                        "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "description": "Get user using Id or login, both params are optional, but one of them is necessary",
@@ -417,6 +526,54 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "author.Author": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "book.Book": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/author.Author"
+                },
+                "cover": {
+                    "description": "Name of cover file",
+                    "type": "string"
+                },
+                "file": {
+                    "description": "Name of book file",
+                    "type": "string"
+                },
+                "genres": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genre.Genre"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pages": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "errormiddleware.Code": {
             "type": "string",
             "enum": [
@@ -452,6 +609,20 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "genre.Genre": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

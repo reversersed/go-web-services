@@ -5,10 +5,13 @@
 package mock_book
 
 import (
+	context "context"
+	io "io"
 	http "net/http"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	book "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/book"
 )
 
 // MockBookService is a mock of BookService interface.
@@ -32,6 +35,21 @@ func NewMockBookService(ctrl *gomock.Controller) *MockBookService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBookService) EXPECT() *MockBookServiceMockRecorder {
 	return m.recorder
+}
+
+// AddBook mocks base method.
+func (m *MockBookService) AddBook(ctx context.Context, body io.Reader, contentType string) (*book.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBook", ctx, body, contentType)
+	ret0, _ := ret[0].(*book.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddBook indicates an expected call of AddBook.
+func (mr *MockBookServiceMockRecorder) AddBook(ctx, body, contentType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBook", reflect.TypeOf((*MockBookService)(nil).AddBook), ctx, body, contentType)
 }
 
 // MockJwtService is a mock of JwtService interface.
