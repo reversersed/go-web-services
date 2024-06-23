@@ -1,4 +1,4 @@
-package book
+package genre
 
 import (
 	"bytes"
@@ -10,9 +10,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/julienschmidt/httprouter"
-	mock "github.com/reversersed/go-web-services/tree/main/api_authors/internal/handlers/book/mocks"
-	"github.com/reversersed/go-web-services/tree/main/api_authors/pkg/errormiddleware"
-	"github.com/reversersed/go-web-services/tree/main/api_authors/pkg/logging"
+	mock "github.com/reversersed/go-web-services/tree/main/api_genres/internal/handlers/genre/mocks"
+	"github.com/reversersed/go-web-services/tree/main/api_genres/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_genres/pkg/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"

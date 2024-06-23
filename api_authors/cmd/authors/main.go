@@ -14,7 +14,7 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_authors/internal/client"
 	"github.com/reversersed/go-web-services/tree/main/api_authors/internal/client/db"
 	"github.com/reversersed/go-web-services/tree/main/api_authors/internal/config"
-	"github.com/reversersed/go-web-services/tree/main/api_authors/internal/handlers/book"
+	author "github.com/reversersed/go-web-services/tree/main/api_authors/internal/handlers/author"
 	"github.com/reversersed/go-web-services/tree/main/api_authors/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_authors/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_authors/pkg/mongo"
@@ -46,7 +46,7 @@ func main() {
 	bookService := client.NewService(bookStorage, logger, cache, validator.New())
 
 	logger.Info("handlers registration...")
-	handler := book.Handler{Logger: logger, BookService: bookService}
+	handler := author.Handler{Logger: logger, BookService: bookService}
 	handler.Register(router)
 
 	logger.Info("starting application...")

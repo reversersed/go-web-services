@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_books/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_books/pkg/errormiddleware"
@@ -20,16 +21,27 @@ type service struct {
 func NewService(storage Storage, logger *logging.Logger, cache cache.Cache, validator *valid.Validator) *service {
 	return &service{storage: storage, logger: logger, cache: cache, validator: validator}
 }
+func (s *service) IsBookExists(ctx context.Context, name string) bool {
+	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	book, err := s.storage.GetBookByName(cntx, name)
+	s.logger.Infof("find book: %v with err %v", book, err)
+	return (err == nil) && (book != nil)
+}
 func (s *service) AddBook(ctx context.Context, query *InsertBookQuery) (*Book, error) {
 
-	if err := s.validator.Struct(&query); err != nil {
+	if err := s.validator.Struct(query); err != nil {
 		return nil, errormiddleware.ValidationError(err, "wrong query")
 	}
 	book := &Book{
-		Name:     query.Name,
-		AuthorId: query.AuthorId,
-		GenresId: query.GenresId,
-		Year:     query.Year,
+		Name:      query.Name,
+		AuthorId:  query.AuthorId,
+		GenresId:  query.GenresId,
+		Pages:     query.Pages,
+		Year:      query.Year,
+		FilePath:  query.FilePath,
+		CoverPath: query.CoverPath,
 	}
 	id, err := s.storage.AddBook(ctx, book)
 	if err != nil {

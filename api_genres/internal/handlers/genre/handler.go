@@ -1,4 +1,4 @@
-package book
+package genre
 
 import (
 	"github.com/julienschmidt/httprouter"

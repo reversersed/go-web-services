@@ -5,7 +5,11 @@
 package mock_client
 
 import (
+	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
+	client "github.com/reversersed/go-web-services/tree/main/api_books/internal/client"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -29,4 +33,34 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
+}
+
+// AddBook mocks base method.
+func (m *MockStorage) AddBook(ctx context.Context, book *client.Book) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBook", ctx, book)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddBook indicates an expected call of AddBook.
+func (mr *MockStorageMockRecorder) AddBook(ctx, book interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBook", reflect.TypeOf((*MockStorage)(nil).AddBook), ctx, book)
+}
+
+// GetBookByName mocks base method.
+func (m *MockStorage) GetBookByName(ctx context.Context, name string) (*client.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBookByName", ctx, name)
+	ret0, _ := ret[0].(*client.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBookByName indicates an expected call of GetBookByName.
+func (mr *MockStorageMockRecorder) GetBookByName(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookByName", reflect.TypeOf((*MockStorage)(nil).GetBookByName), ctx, name)
 }

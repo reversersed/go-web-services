@@ -64,7 +64,7 @@ func main() {
 	}
 
 	user_service := user.NewService(config.Urls.UserServiceURL, "/users", logger)
-	user_handler := auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService, Validator: validator}
+	user_handler := &auth.Handler{Logger: logger, UserService: user_service, JwtService: jwtService, Validator: validator}
 	user_handler.Register(router)
 
 	logger.Info("starting application...")

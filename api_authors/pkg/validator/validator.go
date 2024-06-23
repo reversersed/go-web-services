@@ -34,8 +34,10 @@ func New() *Validator {
 	return &Validator{v}
 }
 func validate_PrimitiveId(field validator.FieldLevel) bool {
+	var obj primitive.ObjectID
+
 	_, err := primitive.ObjectIDFromHex(field.Field().String())
-	return (err == nil)
+	return (err == nil) || (field.Field().Kind() == reflect.TypeOf(obj).Kind())
 }
 func validate_OnlyEnglish(field validator.FieldLevel) bool {
 	mathed, err := regexp.MatchString(`^[a-zA-Z]+$`, field.Field().String())

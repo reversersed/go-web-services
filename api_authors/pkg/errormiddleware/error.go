@@ -52,6 +52,10 @@ func BadRequestError(message []string, dev_message string) *Error {
 	return NewError(message, BadRequestErrorCode, dev_message)
 }
 func ValidationError(errors error, dev_message string) *Error {
+	invError, ok := errors.(*validator.InvalidValidationError)
+	if ok {
+		return sysError([]string{invError.Error(), invError.Type.String()})
+	}
 	valErrors, ok := errors.(validator.ValidationErrors)
 	if !ok {
 		return sysError([]string{"unhandled errors type"})
@@ -64,9 +68,17 @@ func ValidationError(errors error, dev_message string) *Error {
 		case "oneof":
 			errs = append(errs, fmt.Sprintf("%s: field can only be: %s", err.Field(), err.Param()))
 		case "min":
-			errs = append(errs, fmt.Sprintf("%s must be at least %s characters length", err.Field(), err.Param()))
+			errs = append(errs, fmt.Sprintf("%s must be more than %s characters length", err.Field(), err.Param()))
 		case "max":
-			errs = append(errs, fmt.Sprintf("%s can't be more that %s characters length", err.Field(), err.Param()))
+			errs = append(errs, fmt.Sprintf("%s can't be more than %s characters length", err.Field(), err.Param()))
+		case "lte":
+			errs = append(errs, fmt.Sprintf("%s must be less or equal than %s", err.Field(), err.Param()))
+		case "gte":
+			errs = append(errs, fmt.Sprintf("%s must be greater or equal than %s", err.Field(), err.Param()))
+		case "lt":
+			errs = append(errs, fmt.Sprintf("%s must be less than %s", err.Field(), err.Param()))
+		case "gt":
+			errs = append(errs, fmt.Sprintf("%s must be greater than %s", err.Field(), err.Param()))
 		case "email":
 			errs = append(errs, fmt.Sprintf("%s must be a valid email", err.Field()))
 		case "jwt":
@@ -81,6 +93,8 @@ func ValidationError(errors error, dev_message string) *Error {
 			errs = append(errs, fmt.Sprintf("%s must contain at least one special symbol", err.Field()))
 		case "onlyenglish":
 			errs = append(errs, fmt.Sprintf("%s must contain only latin characters", err.Field()))
+		case "primitiveid":
+			errs = append(errs, fmt.Sprintf("%s must be a primitive id type", err.Field()))
 		default:
 			errs = append(errs, err.Error())
 		}

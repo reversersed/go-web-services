@@ -5,7 +5,7 @@ WORKDIR /usr/local/go/src/
 ADD . .
 
 RUN go clean --modcache
-RUN go build -mod=readonly -o app cmd/book/main.go
+RUN go build -mod=readonly -o app cmd/authors/main.go
 
 FROM alpine:3.19
 

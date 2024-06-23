@@ -5,7 +5,11 @@
 package mock_book
 
 import (
+	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
+	client "github.com/reversersed/go-web-services/tree/main/api_books/internal/client"
 )
 
 // MockService is a mock of Service interface.
@@ -29,4 +33,33 @@ func NewMockService(ctrl *gomock.Controller) *MockService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
+}
+
+// AddBook mocks base method.
+func (m *MockService) AddBook(ctx context.Context, query *client.InsertBookQuery) (*client.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBook", ctx, query)
+	ret0, _ := ret[0].(*client.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddBook indicates an expected call of AddBook.
+func (mr *MockServiceMockRecorder) AddBook(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBook", reflect.TypeOf((*MockService)(nil).AddBook), ctx, query)
+}
+
+// IsBookExists mocks base method.
+func (m *MockService) IsBookExists(ctx context.Context, name string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsBookExists", ctx, name)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsBookExists indicates an expected call of IsBookExists.
+func (mr *MockServiceMockRecorder) IsBookExists(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsBookExists", reflect.TypeOf((*MockService)(nil).IsBookExists), ctx, name)
 }
