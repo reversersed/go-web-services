@@ -1,5 +1,7 @@
 package user
 
+import "net/http"
+
 type User struct {
 	Id             string   `json:"id"`
 	Login          string   `json:"login"`
@@ -24,12 +26,9 @@ type UpdateUserLoginQuery struct {
 	NewLogin string `json:"newlogin" validate:"required,min=4,max=16,onlyenglish"`
 }
 
-type RefreshTokenQuery struct {
-	RefreshToken string `json:"refreshtoken" validate:"required"`
-}
 type JwtResponse struct {
-	Login        string   `json:"login"`
-	Roles        []string `json:"roles"`
-	Token        string   `json:"token"`
-	RefreshToken string   `json:"refreshtoken"`
+	Login        string       `json:"login"`
+	Roles        []string     `json:"roles"`
+	Token        *http.Cookie `json:"-"`
+	RefreshToken *http.Cookie `json:"-"`
 }

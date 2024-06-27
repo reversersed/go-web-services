@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -53,7 +52,8 @@ func TestMiddleware(t *testing.T) {
 			assert.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "http://test", nil)
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.Token))
+			req.AddCookie(token.Token)
+			req.AddCookie(token.RefreshToken)
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, req)
 
@@ -101,7 +101,7 @@ func TestNilKeyMiddleware(t *testing.T) {
 	token, _ := builder.Build(claims)
 
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
-	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
+	r.AddCookie(&http.Cookie{Name: TokenCookieName, Value: token.String()})
 	handler.ServeHTTP(w, r)
 	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }
@@ -116,7 +116,7 @@ func TestNilTokenMiddleware(t *testing.T) {
 	}))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
-	r.Header.Add("Authorization", "Bearer ")
+	r.AddCookie(&http.Cookie{Name: TokenCookieName, Value: ""})
 	handler.ServeHTTP(w, r)
 	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }
@@ -146,7 +146,7 @@ func TestOldTokenMiddleware(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "http://test", nil)
-	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.String()))
+	r.AddCookie(&http.Cookie{Name: TokenCookieName, Value: token.String()})
 	handler.ServeHTTP(w, r)
 	assert.Equal(t, w.Result().StatusCode, http.StatusUnauthorized)
 }

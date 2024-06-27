@@ -17,7 +17,6 @@ import (
 
 const (
 	url_auth              = "/api/v1/users/login"
-	url_refresh           = "/api/v1/users/refresh"
 	url_register          = "/api/v1/users/register"
 	url_confirm_email     = "/api/v1/users/email"
 	url_find_user         = "/api/v1/users"
@@ -38,7 +37,6 @@ type UserService interface {
 type JwtService interface {
 	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
 	GenerateAccessToken(u *model.User) (*model.JwtResponse, error)
-	UpdateRefreshToken(query *model.RefreshTokenQuery) (*model.JwtResponse, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -49,7 +47,6 @@ type Handler struct {
 
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, h.Logger.Middleware(mw.Middleware(h.Authenticate)))
-	router.HandlerFunc(http.MethodPost, url_refresh, h.Logger.Middleware(mw.Middleware(h.UpdateToken)))
 	router.HandlerFunc(http.MethodPost, url_register, h.Logger.Middleware(mw.Middleware(h.UserRegister)))
 	router.HandlerFunc(http.MethodPost, url_confirm_email, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.EmailConfirmation))))
 	router.HandlerFunc(http.MethodGet, url_find_user, h.Logger.Middleware(mw.Middleware(h.FindUser)))
@@ -85,17 +82,19 @@ func (h *Handler) UpdateUserLogin(w http.ResponseWriter, r *http.Request) error 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	model, err := h.UserService.UpdateUserLogin(ctx, &query)
+	user, err := h.UserService.UpdateUserLogin(ctx, &query)
 	if err != nil {
 		return err
 	}
-	token, err := h.JwtService.GenerateAccessToken(model)
+	token, err := h.JwtService.GenerateAccessToken(user)
 	if err != nil {
 		h.Logger.Warn(err)
 		return err
 	}
 	data, _ := json.Marshal(token)
 
+	http.SetCookie(w, token.Token)
+	http.SetCookie(w, token.RefreshToken)
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 	return nil
@@ -164,41 +163,6 @@ func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) erro
 	return nil
 }
 
-// @Summary Generate new token
-// @Description Generate new token by provided refresh token
-// @Description Refresh token stored in cache and expires in 7 days. If system was restarted, all tokens are cleared and sessions are deleted
-// @Tags users
-// @Produce json
-// @Param query body model.RefreshTokenQuery true "Request query with user's refresh token"
-// @Success 200 {object} model.JwtResponse "Successful response. Returns the same data as in authorization"
-// @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"
-// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
-// @Failure 501 {object} errormiddleware.Error "Returns when provided data was not validated"
-// @Router /users/refresh [post]
-func (h *Handler) UpdateToken(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Content-Type", "application/json")
-
-	defer r.Body.Close()
-	var query model.RefreshTokenQuery
-	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
-		return err
-	}
-	if err := h.Validator.Struct(query); err != nil {
-		return mw.ValidationError(err.(validator.ValidationErrors), "wrong token format")
-	}
-	token, err := h.JwtService.UpdateRefreshToken(&query)
-	if err != nil {
-		h.Logger.Warn(err)
-		return err
-	}
-
-	data, _ := json.Marshal(token)
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
-	return nil
-}
-
 // @Summary Finds user by id or login
 // @Description Get user using Id or login, both params are optional, but one of them is necessary
 // @Produce json
@@ -227,7 +191,7 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 
 // @Summary Authenticates user
 // @Description Finds user by login and password
-// @Description Returns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)
+// @Description Sets token to cookies
 // @Description Login field can be provided with user login or email
 // @Produce json
 // @Tags users
@@ -259,13 +223,15 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 	}
 	data, _ := json.Marshal(token)
 
+	http.SetCookie(w, token.Token)
+	http.SetCookie(w, token.RefreshToken)
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 	return nil
 }
 
 // @Summary Register user
-// @Description Creates a new instance of user and returns authorization principals
+// @Description Creates a new instance of user and returns authorization principals. Sets the token cookies
 // @Produce json
 // @Tags users
 // @Param query body model.UserRegisterQuery true "User credentials"
@@ -296,6 +262,8 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) error {
 	}
 	data, _ := json.Marshal(token)
 
+	http.SetCookie(w, token.Token)
+	http.SetCookie(w, token.RefreshToken)
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 	return nil

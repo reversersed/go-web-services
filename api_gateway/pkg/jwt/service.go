@@ -2,16 +2,22 @@ package jwt
 
 import (
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+const (
+	TokenCookieName   string = "authTokenCookie"
+	RefreshCookieName string = "refreshTokenCookie"
 )
 
 type UserClaims struct {
@@ -31,18 +37,13 @@ type jwtService struct {
 func NewService(cache cache.Cache, logger *logging.Logger, validate *valid.Validator, secret string) *jwtService {
 	return &jwtService{Logger: logger, Cache: cache, Validator: validate, secret: secret}
 }
-func (j *jwtService) UpdateRefreshToken(rt *user.RefreshTokenQuery) (*user.JwtResponse, error) {
-	if err := j.Validator.Struct(rt); err != nil {
-		tp, ok := err.(validator.ValidationErrors)
-		if ok {
-			return nil, errormiddleware.ValidationError(tp, "wrong refresh token format")
-		} else {
-			return nil, errormiddleware.NotFoundError([]string{"wrong refresh token format"}, err.Error())
-		}
+func (j *jwtService) UpdateRefreshToken(refreshToken string) (*user.JwtResponse, error) {
+	if err := j.Validator.Var(refreshToken, "primitiveid"); err != nil {
+		return nil, errormiddleware.ValidationError(err.(validator.ValidationErrors), "wrong refresh token format")
 	}
-	defer j.Cache.Delete([]byte(rt.RefreshToken))
+	defer j.Cache.Delete([]byte(refreshToken))
 
-	userBytes, err := j.Cache.Get([]byte(rt.RefreshToken))
+	userBytes, err := j.Cache.Get([]byte(refreshToken))
 	if err != nil {
 		j.Logger.Warn(err)
 		return nil, errormiddleware.NotFoundError([]string{"couldn't get refresh token from cache"}, err.Error())
@@ -80,10 +81,31 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*user.JwtResponse, error
 	}
 
 	j.Logger.Info("creating refresh token...")
-	refreshTokenUuid := uuid.New()
+	refreshTokenUuid := primitive.NewObjectID().Hex()
 	userBytes, _ := json.Marshal(u)
-	j.Cache.Set([]byte(refreshTokenUuid.String()), userBytes, int((7*24*time.Hour)/time.Second))
+	j.Cache.Set([]byte(refreshTokenUuid), userBytes, int((7*24*time.Hour)/time.Second))
 
-	responseToken := &user.JwtResponse{Login: u.Login, Roles: u.Roles, Token: token.String(), RefreshToken: refreshTokenUuid.String()}
+	responseToken := &user.JwtResponse{
+		Login: u.Login,
+		Roles: u.Roles,
+		Token: &http.Cookie{
+			Name:     TokenCookieName,
+			Value:    token.String(),
+			MaxAge:   (int)((31 * 24 * time.Hour) / time.Second),
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			Path:     "/",
+		},
+		RefreshToken: &http.Cookie{
+			Name:     RefreshCookieName,
+			Value:    refreshTokenUuid,
+			MaxAge:   (int)((31 * 24 * time.Hour) / time.Second),
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			Path:     "/",
+		},
+	}
 	return responseToken, nil
 }

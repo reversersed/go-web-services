@@ -47,19 +47,19 @@ test-unit: test-folder-creation
 
 test-folder-creation:
 ifeq ($(OS),Windows_NT)
-	@cd ./api_gateway/ && mkdir tests
-	@cd ./api_user/ && mkdir tests
-	@cd ./api_notification/ && mkdir tests
-	@cd ./api_books/ && mkdir tests
-	@cd ./api_authors/ && mkdir tests
-	@cd ./api_genres/ && mkdir tests
+	-@cd ./api_gateway/ && mkdir tests
+	-@cd ./api_user/ && mkdir tests
+	-@cd ./api_notification/ && mkdir tests
+	-@cd ./api_books/ && mkdir tests
+	-@cd ./api_authors/ && mkdir tests
+	-@cd ./api_genres/ && mkdir tests
 else
-	@cd ./api_gateway/ && mkdir -p tests
-	@cd ./api_user/ && mkdir -p tests
-	@cd ./api_notification/ && mkdir -p tests
-	@cd ./api_books/ && mkdir -p tests
-	@cd ./api_authors/ && mkdir -p tests
-	@cd ./api_genres/ && mkdir -p tests
+	-@cd ./api_gateway/ && mkdir -p tests
+	-@cd ./api_user/ && mkdir -p tests
+	-@cd ./api_notification/ && mkdir -p tests
+	-@cd ./api_books/ && mkdir -p tests
+	-@cd ./api_authors/ && mkdir -p tests
+	-@cd ./api_genres/ && mkdir -p tests
 endif
 
 gen:

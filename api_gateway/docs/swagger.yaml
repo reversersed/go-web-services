@@ -83,21 +83,10 @@ definitions:
     properties:
       login:
         type: string
-      refreshtoken:
-        type: string
       roles:
         items:
           type: string
         type: array
-      token:
-        type: string
-    type: object
-  user.RefreshTokenQuery:
-    properties:
-      refreshtoken:
-        type: string
-    required:
-    - refreshtoken
     type: object
   user.UpdateUserLoginQuery:
     properties:
@@ -411,7 +400,7 @@ paths:
     post:
       description: |-
         Finds user by login and password
-        Returns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)
+        Sets token to cookies
         Login field can be provided with user login or email
       parameters:
       - description: User credentials
@@ -444,44 +433,10 @@ paths:
       summary: Authenticates user
       tags:
       - users
-  /users/refresh:
-    post:
-      description: |-
-        Generate new token by provided refresh token
-        Refresh token stored in cache and expires in 7 days. If system was restarted, all tokens are cleared and sessions are deleted
-      parameters:
-      - description: Request query with user's refresh token
-        in: body
-        name: query
-        required: true
-        schema:
-          $ref: '#/definitions/user.RefreshTokenQuery'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successful response. Returns the same data as in authorization
-          schema:
-            $ref: '#/definitions/user.JwtResponse'
-        "404":
-          description: Returns when service can't find user by provided credentials
-            (user not found)
-          schema:
-            $ref: '#/definitions/errormiddleware.Error'
-        "500":
-          description: Returns when there's some internal error that needs to be fixed
-          schema:
-            $ref: '#/definitions/errormiddleware.Error'
-        "501":
-          description: Returns when provided data was not validated
-          schema:
-            $ref: '#/definitions/errormiddleware.Error'
-      summary: Generate new token
-      tags:
-      - users
   /users/register:
     post:
-      description: Creates a new instance of user and returns authorization principals
+      description: Creates a new instance of user and returns authorization principals.
+        Sets the token cookies
       parameters:
       - description: User credentials
         in: body

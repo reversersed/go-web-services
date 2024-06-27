@@ -35,7 +35,7 @@ import (
 // @accept json
 
 // @securityDefinitions.apiKey ApiKeyAuth
-// @in header
+// @in Cookie
 // @name Authorization
 func main() {
 	logger := logging.GetLogger()

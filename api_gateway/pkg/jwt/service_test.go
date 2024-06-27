@@ -87,29 +87,19 @@ func TestUpdateToken(t *testing.T) {
 			token, err := service.GenerateAccessToken(&testCase.User)
 			assert.NoError(t, err)
 
-			response, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
+			response, err := service.UpdateRefreshToken(token.RefreshToken.Value)
 			assert.Equal(t, err, testCase.Err)
 
 			if response != nil {
 				assert.Equal(t, response.Login, testCase.User.Login)
 			}
 
-			_, err = service.UpdateRefreshToken(&user.RefreshTokenQuery{RefreshToken: token.RefreshToken})
+			_, err = service.UpdateRefreshToken(token.RefreshToken.Value)
 			assert.Error(t, err)
 		})
 	}
 }
 
-func TestNilRefreshToken(t *testing.T) {
-	log, _ := test.NewNullLogger()
-	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
-	val := validator.New()
-	cache := freecache.NewCache(0)
-	service := NewService(cache, logger, val, "secret")
-
-	_, err := service.UpdateRefreshToken(nil)
-	assert.Error(t, err)
-}
 func TestWrongRefreshToken(t *testing.T) {
 	log, _ := test.NewNullLogger()
 	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
@@ -117,6 +107,6 @@ func TestWrongRefreshToken(t *testing.T) {
 	cache := freecache.NewCache(0)
 	service := NewService(cache, logger, val, "secret")
 
-	_, err := service.UpdateRefreshToken(&user.RefreshTokenQuery{})
+	_, err := service.UpdateRefreshToken("")
 	assert.Error(t, err)
 }

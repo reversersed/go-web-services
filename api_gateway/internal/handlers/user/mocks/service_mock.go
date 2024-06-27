@@ -181,18 +181,3 @@ func (mr *MockJwtServiceMockRecorder) Middleware(h interface{}, roles ...interfa
 	varargs := append([]interface{}{h}, roles...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Middleware", reflect.TypeOf((*MockJwtService)(nil).Middleware), varargs...)
 }
-
-// UpdateRefreshToken mocks base method.
-func (m *MockJwtService) UpdateRefreshToken(query *user.RefreshTokenQuery) (*user.JwtResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRefreshToken", query)
-	ret0, _ := ret[0].(*user.JwtResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateRefreshToken indicates an expected call of UpdateRefreshToken.
-func (mr *MockJwtServiceMockRecorder) UpdateRefreshToken(query interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRefreshToken", reflect.TypeOf((*MockJwtService)(nil).UpdateRefreshToken), query)
-}

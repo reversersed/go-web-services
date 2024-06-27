@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/cristalhq/jwt/v3"
@@ -16,13 +15,12 @@ import (
 
 func (s *jwtService) Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		header := strings.Split(r.Header.Get("Authorization"), "Bearer ")
-		if len(header) != 2 {
-			s.Logger.Warnf("Wrong provided token: %s", r.Header.Get("Authorization"))
-			unauthorized(w, fmt.Errorf("wrong token form provided"))
+		cookie, err := r.Cookie(TokenCookieName)
+		if err != nil {
+			unauthorized(w, err)
 			return
 		}
-		headertoken := header[1]
+		headertoken := cookie.Value
 		key := []byte(s.secret)
 		verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
 		if err != nil {
@@ -43,8 +41,22 @@ func (s *jwtService) Middleware(h http.HandlerFunc, roles ...string) http.Handle
 			return
 		}
 		if !claims.IsValidAt(time.Now()) {
-			unauthorized(w, fmt.Errorf("token has been expired"))
-			return
+			refreshCookie, err := r.Cookie(RefreshCookieName)
+			if err != nil {
+				http.SetCookie(w, &http.Cookie{Name: TokenCookieName, MaxAge: -1})
+				http.SetCookie(w, &http.Cookie{Name: RefreshCookieName, MaxAge: -1})
+				unauthorized(w, err)
+				return
+			}
+			token, err := s.UpdateRefreshToken(refreshCookie.Value)
+			if err != nil {
+				http.SetCookie(w, &http.Cookie{Name: TokenCookieName, MaxAge: -1})
+				http.SetCookie(w, &http.Cookie{Name: RefreshCookieName, MaxAge: -1})
+				unauthorized(w, err)
+				return
+			}
+			http.SetCookie(w, token.Token)
+			http.SetCookie(w, token.RefreshToken)
 		}
 		if len(roles) > 0 {
 			var errorRoles []string
@@ -65,7 +77,7 @@ func (s *jwtService) Middleware(h http.HandlerFunc, roles ...string) http.Handle
 func unauthorized(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusUnauthorized)
-	w.Write(errormiddleware.UnauthorizedError([]string{err.Error()}, "unauthorized due to error, check logs").Marshall())
+	w.Write(errormiddleware.UnauthorizedError([]string{"User not logined in"}, err.Error()).Marshall())
 }
 func forbidden(w http.ResponseWriter, errors []string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

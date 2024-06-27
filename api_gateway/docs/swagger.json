@@ -372,7 +372,7 @@
         },
         "/users/login": {
             "post": {
-                "description": "Finds user by login and password\nReturns a token and refresh token. Token expires in 1 hour, refresh token expires in 7 days and stores in cache (removing after system restart)\nLogin field can be provided with user login or email",
+                "description": "Finds user by login and password\nSets token to cookies\nLogin field can be provided with user login or email",
                 "produces": [
                     "application/json"
                 ],
@@ -419,58 +419,9 @@
                 }
             }
         },
-        "/users/refresh": {
-            "post": {
-                "description": "Generate new token by provided refresh token\nRefresh token stored in cache and expires in 7 days. If system was restarted, all tokens are cleared and sessions are deleted",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Generate new token",
-                "parameters": [
-                    {
-                        "description": "Request query with user's refresh token",
-                        "name": "query",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.RefreshTokenQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response. Returns the same data as in authorization",
-                        "schema": {
-                            "$ref": "#/definitions/user.JwtResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Returns when service can't find user by provided credentials (user not found)",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Returns when there's some internal error that needs to be fixed",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    },
-                    "501": {
-                        "description": "Returns when provided data was not validated",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/users/register": {
             "post": {
-                "description": "Creates a new instance of user and returns authorization principals",
+                "description": "Creates a new instance of user and returns authorization principals. Sets the token cookies",
                 "produces": [
                     "application/json"
                 ],
@@ -636,28 +587,11 @@
                 "login": {
                     "type": "string"
                 },
-                "refreshtoken": {
-                    "type": "string"
-                },
                 "roles": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.RefreshTokenQuery": {
-            "type": "object",
-            "required": [
-                "refreshtoken"
-            ],
-            "properties": {
-                "refreshtoken": {
-                    "type": "string"
                 }
             }
         },

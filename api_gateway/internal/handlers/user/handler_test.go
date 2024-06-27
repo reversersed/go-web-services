@@ -15,6 +15,7 @@ import (
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	mock "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/user/mocks"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 	"github.com/sirupsen/logrus"
@@ -38,7 +39,6 @@ func TestRegister(t *testing.T) {
 		Method string
 	}{
 		{"Authorization", url_auth, http.MethodPost},
-		{"Token refresh", url_refresh, http.MethodPost},
 		{"Registration", url_register, http.MethodPost},
 		{"Email confirmation", url_confirm_email, http.MethodPost},
 		{"Find user", url_find_user, http.MethodGet},
@@ -98,8 +98,8 @@ func TestHandlers(t *testing.T) {
 							j.EXPECT().GenerateAccessToken(usr).Return(&model.JwtResponse{
 								Login:        usr.Login,
 								Roles:        usr.Roles,
-								Token:        "EXAMPLE TOKEN",
-								RefreshToken: "TOKEN",
+								Token:        &http.Cookie{Name: jwt.TokenCookieName, Value: "EXAMPLE TOKEN"},
+								RefreshToken: &http.Cookie{Name: jwt.RefreshCookieName, Value: "TOKEN"},
 							}, nil),
 						)
 					},
@@ -108,7 +108,7 @@ func TestHandlers(t *testing.T) {
 						return &byt
 					},
 					ExceptedStatus: http.StatusOK,
-					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\",\"admin\"],\"token\":\"EXAMPLE TOKEN\",\"refreshtoken\":\"TOKEN\"}",
+					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\",\"admin\"]}",
 				},
 				//Validation error
 				{
@@ -269,66 +269,6 @@ func TestHandlers(t *testing.T) {
 				},
 			},
 		},
-		//UpdateToken
-		{
-			HandlerName: "UpdateToken",
-			Handler:     h.UpdateToken,
-			Method:      http.MethodPost,
-			Options: []handlerOptions{
-				//Successful
-				{
-					Name: "success",
-					MockBehaviour: func(s *mock.MockUserService, j *mock.MockJwtService) {
-						j.EXPECT().UpdateRefreshToken(gomock.Any()).Return(&model.JwtResponse{
-							Login:        "user",
-							Roles:        []string{"user"},
-							Token:        "token",
-							RefreshToken: "refresh token",
-						}, nil)
-					},
-					InputJson: func() *[]byte {
-						byte, _ := json.Marshal(&model.RefreshTokenQuery{
-							RefreshToken: "token",
-						})
-						return &byte
-					},
-					ExceptedStatus: http.StatusOK,
-					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"],\"token\":\"token\",\"refreshtoken\":\"refresh token\"}",
-				},
-				//Nil body
-				{
-					Name:           "nil body",
-					ExceptedStatus: http.StatusInternalServerError,
-					ExceptedError:  errors.New("EOF"),
-					ExceptedBody:   `{"messages":["EOF"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
-				},
-				//Validation error
-				{
-					Name: "validation error",
-					InputJson: func() *[]byte {
-						byte, _ := json.Marshal(&model.RefreshTokenQuery{})
-						return &byte
-					},
-					ExceptedStatus: http.StatusNotImplemented,
-					ExceptedError:  errormiddleware.NewError([]string{"refreshtoken: field is required"}, errormiddleware.ValidationErrorCode, "wrong token format"),
-					ExceptedBody:   `{"messages":["refreshtoken: field is required"],"dev_message":"wrong token format","code":"IE-0004"}`,
-				},
-				//Service error
-				{
-					Name: "service error",
-					InputJson: func() *[]byte {
-						byte, _ := json.Marshal(&model.RefreshTokenQuery{RefreshToken: "123"})
-						return &byte
-					},
-					MockBehaviour: func(s *mock.MockUserService, j *mock.MockJwtService) {
-						j.EXPECT().UpdateRefreshToken(gomock.Any()).Return(nil, errors.New("wrong token"))
-					},
-					ExceptedStatus: http.StatusInternalServerError,
-					ExceptedError:  errors.New("wrong token"),
-					ExceptedBody:   `{"messages":["wrong token"],"dev_message":"Something wrong happened while service executing","code":"IE-0001"}`,
-				},
-			},
-		},
 		//FindUser
 		{
 			HandlerName: "FindUser",
@@ -380,8 +320,8 @@ func TestHandlers(t *testing.T) {
 							j.EXPECT().GenerateAccessToken(usr).Return(&model.JwtResponse{
 								Login:        usr.Login,
 								Roles:        usr.Roles,
-								Token:        "token",
-								RefreshToken: "refreshtoken",
+								Token:        &http.Cookie{Name: jwt.TokenCookieName, Value: "EXAMPLE TOKEN"},
+								RefreshToken: &http.Cookie{Name: jwt.RefreshCookieName, Value: "TOKEN"},
 							}, nil),
 						)
 					},
@@ -393,7 +333,7 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusOK,
-					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"],\"token\":\"token\",\"refreshtoken\":\"refreshtoken\"}",
+					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"]}",
 				},
 				//Nil body
 				{
@@ -464,8 +404,8 @@ func TestHandlers(t *testing.T) {
 							j.EXPECT().GenerateAccessToken(usr).Return(&model.JwtResponse{
 								Login:        usr.Login,
 								Roles:        usr.Roles,
-								Token:        "token",
-								RefreshToken: "refresh token",
+								Token:        &http.Cookie{Name: jwt.TokenCookieName, Value: "EXAMPLE TOKEN"},
+								RefreshToken: &http.Cookie{Name: jwt.RefreshCookieName, Value: "TOKEN"},
 							}, nil),
 						)
 					},
@@ -478,7 +418,7 @@ func TestHandlers(t *testing.T) {
 						return &byte
 					},
 					ExceptedStatus: http.StatusOK,
-					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"],\"token\":\"token\",\"refreshtoken\":\"refresh token\"}",
+					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"]}",
 				},
 				//Nil body
 				{
