@@ -11,12 +11,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 	model "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	mw "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
+	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	valid "github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/validator"
 )
 
 const (
-	url_auth              = "/api/v1/users/login"
+	url_auth              = "/api/v1/users/auth"
 	url_register          = "/api/v1/users/register"
 	url_confirm_email     = "/api/v1/users/email"
 	url_find_user         = "/api/v1/users"
@@ -37,6 +38,7 @@ type UserService interface {
 type JwtService interface {
 	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
 	GenerateAccessToken(u *model.User) (*model.JwtResponse, error)
+	GetUserClaims(token string) (*model.JwtResponse, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -47,6 +49,7 @@ type Handler struct {
 
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_auth, h.Logger.Middleware(mw.Middleware(h.Authenticate)))
+	router.HandlerFunc(http.MethodGet, url_auth, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.Authorize))))
 	router.HandlerFunc(http.MethodPost, url_register, h.Logger.Middleware(mw.Middleware(h.UserRegister)))
 	router.HandlerFunc(http.MethodPost, url_confirm_email, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.EmailConfirmation))))
 	router.HandlerFunc(http.MethodGet, url_find_user, h.Logger.Middleware(mw.Middleware(h.FindUser)))
@@ -189,6 +192,35 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// @Summary Authorizes user
+// @Description Authorizes user's credentials by token. This needs to check if user's token is valid or get current authenticated user
+// @Produce json
+// @Tags users
+// @Success 200 {object} model.JwtResponse "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache"
+// @Failure 401 {object} errormiddleware.Error "Returns if user not authorized"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
+// @Security ApiKeyAuth
+// @Router /users/auth [get]
+func (h *Handler) Authorize(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Content-Type", "application/json")
+
+	tokenString, err := r.Cookie(jwt.TokenCookieName)
+	if err != nil {
+		return mw.UnauthorizedError([]string{"user not authorized"}, err.Error())
+	}
+
+	token, err := h.JwtService.GetUserClaims(tokenString.Value)
+	if err != nil {
+		h.Logger.Warn(err)
+		return err
+	}
+	data, _ := json.Marshal(token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return nil
+}
+
 // @Summary Authenticates user
 // @Description Finds user by login and password
 // @Description Sets token to cookies
@@ -196,11 +228,11 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Tags users
 // @Param query body model.UserAuthQuery true "User credentials"
-// @Success 200 {object} model.JwtResponse "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache"
+// @Success 200 {object} model.JwtResponse "Successful response. Returns user's login and roles
 // @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed"
 // @Failure 501 {object} errormiddleware.Error "Returns when provided data was not validated"
-// @Router /users/login [post]
+// @Router /users/auth [post]
 func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 

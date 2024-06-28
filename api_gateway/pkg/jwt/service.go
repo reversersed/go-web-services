@@ -109,3 +109,24 @@ func (j *jwtService) GenerateAccessToken(u *user.User) (*user.JwtResponse, error
 	}
 	return responseToken, nil
 }
+func (j *jwtService) GetUserClaims(token string) (*user.JwtResponse, error) {
+	verifier, err := jwt.NewVerifierHS(jwt.HS256, []byte(j.secret))
+	if err != nil {
+		return nil, err
+	}
+
+	claimToken, err := jwt.ParseAndVerifyString(token, verifier)
+	if err != nil {
+		return nil, err
+	}
+
+	var claims UserClaims
+	if err := json.Unmarshal(claimToken.RawClaims(), &claims); err != nil {
+		return nil, err
+	}
+	j.Logger.Infof("user %s authorized with %v rights", claims.Login, claims.Roles)
+	return &user.JwtResponse{
+		Login: claims.Login,
+		Roles: claims.Roles,
+	}, nil
+}

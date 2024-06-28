@@ -44,6 +44,6 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rs/cors v1.11.0
 	github.com/swaggo/http-swagger v1.3.4
-	go.mongodb.org/mongo-driver v1.15.1
+	go.mongodb.org/mongo-driver v1.16.0
 	golang.org/x/sys v0.21.0 // indirect
 )

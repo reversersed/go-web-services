@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var generateTokenCases = []struct {
@@ -109,4 +110,26 @@ func TestWrongRefreshToken(t *testing.T) {
 
 	_, err := service.UpdateRefreshToken("")
 	assert.Error(t, err)
+}
+
+func TestGetUserClaims(t *testing.T) {
+	log, _ := test.NewNullLogger()
+	logger := &logging.Logger{Entry: logrus.NewEntry(log)}
+
+	cache := freecache.NewCache(0)
+	service := NewService(cache, logger, nil, "secret")
+
+	user := &user.User{
+		Id:    primitive.NewObjectID().Hex(),
+		Login: "admin",
+		Roles: []string{"user", "admin"},
+		Email: "user@example.com",
+	}
+	token, err := service.GenerateAccessToken(user)
+	assert.NoError(t, err)
+
+	claims, err := service.GetUserClaims(token.Token.Value)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Login, claims.Login)
+	assert.Equal(t, user.Roles, claims.Roles)
 }

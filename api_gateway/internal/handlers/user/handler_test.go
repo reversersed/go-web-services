@@ -39,6 +39,7 @@ func TestRegister(t *testing.T) {
 		Method string
 	}{
 		{"Authorization", url_auth, http.MethodPost},
+		{"Authentication", url_auth, http.MethodGet},
 		{"Registration", url_register, http.MethodPost},
 		{"Email confirmation", url_confirm_email, http.MethodPost},
 		{"Find user", url_find_user, http.MethodGet},
@@ -65,6 +66,7 @@ func TestHandlers(t *testing.T) {
 	type handlerOptions struct {
 		Name           string
 		MockBehaviour  func(s *mock.MockUserService, j *mock.MockJwtService)
+		TokenCookie    string
 		InputJson      func() *[]byte
 		ExceptedStatus int
 		ExceptedError  error
@@ -384,6 +386,45 @@ func TestHandlers(t *testing.T) {
 				},
 			},
 		},
+		//Authorization
+		{
+			HandlerName: "Authorization",
+			Handler:     h.Authorize,
+			Method:      http.MethodGet,
+			Options: []handlerOptions{
+				//Successful response
+				{
+					Name: "success",
+					MockBehaviour: func(s *mock.MockUserService, j *mock.MockJwtService) {
+						j.EXPECT().GetUserClaims("TOKEN_COOKIE_EXAMPLE").Return(&model.JwtResponse{
+							Login: "user",
+							Roles: []string{"user"},
+						}, nil)
+					},
+					TokenCookie:    "TOKEN_COOKIE_EXAMPLE",
+					ExceptedStatus: http.StatusOK,
+					ExceptedBody:   "{\"login\":\"user\",\"roles\":[\"user\"]}",
+				},
+				//Empty cookies
+				{
+					Name:           "empty cookie",
+					ExceptedStatus: http.StatusUnauthorized,
+					ExceptedError:  errormiddleware.UnauthorizedError([]string{"user not authorized"}, "http: named cookie not present"),
+					ExceptedBody:   "{\"messages\":[\"user not authorized\"],\"dev_message\":\"http: named cookie not present\",\"code\":\"IE-0005\"}",
+				},
+				//Service error
+				{
+					Name: "service error",
+					MockBehaviour: func(s *mock.MockUserService, j *mock.MockJwtService) {
+						j.EXPECT().GetUserClaims("TOKEN_COOKIE_EXAMPLE").Return(nil, errors.New("internal error marshalling"))
+					},
+					TokenCookie:    "TOKEN_COOKIE_EXAMPLE",
+					ExceptedStatus: http.StatusInternalServerError,
+					ExceptedError:  errors.New("internal error marshalling"),
+					ExceptedBody:   "{\"messages\":[\"internal error marshalling\"],\"dev_message\":\"Something wrong happened while service executing\",\"code\":\"IE-0001\"}",
+				},
+			},
+		},
 		//UserRegister
 		{
 			HandlerName: "UserRegister",
@@ -483,12 +524,12 @@ func TestHandlers(t *testing.T) {
 			t.Run(fmt.Sprintf("%s %s", tt.HandlerName, testCase.Name), func(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				defer ctrl.Finish()
-				jwt := mock.NewMockJwtService(ctrl)
+				jwtService := mock.NewMockJwtService(ctrl)
 				user := mock.NewMockUserService(ctrl)
 				if testCase.MockBehaviour != nil {
-					testCase.MockBehaviour(user, jwt)
+					testCase.MockBehaviour(user, jwtService)
 				}
-				h.JwtService = jwt
+				h.JwtService = jwtService
 				h.UserService = user
 
 				w := httptest.NewRecorder()
@@ -497,6 +538,12 @@ func TestHandlers(t *testing.T) {
 					r = httptest.NewRequest(tt.Method, "http://test", bytes.NewBuffer(*testCase.InputJson()))
 				} else {
 					r = httptest.NewRequest(tt.Method, "http://test", nil)
+				}
+				if len(testCase.TokenCookie) > 0 {
+					r.AddCookie(&http.Cookie{
+						Name:  jwt.TokenCookieName,
+						Value: testCase.TokenCookie,
+					})
 				}
 				err := errormiddleware.Middleware(tt.Handler)(w, r)
 				assert.Equal(t, testCase.ExceptedStatus, w.Result().StatusCode)

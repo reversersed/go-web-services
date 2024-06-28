@@ -163,6 +163,21 @@ func (mr *MockJwtServiceMockRecorder) GenerateAccessToken(u interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAccessToken", reflect.TypeOf((*MockJwtService)(nil).GenerateAccessToken), u)
 }
 
+// GetUserClaims mocks base method.
+func (m *MockJwtService) GetUserClaims(token string) (*user.JwtResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserClaims", token)
+	ret0, _ := ret[0].(*user.JwtResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserClaims indicates an expected call of GetUserClaims.
+func (mr *MockJwtServiceMockRecorder) GetUserClaims(token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserClaims", reflect.TypeOf((*MockJwtService)(nil).GetUserClaims), token)
+}
+
 // Middleware mocks base method.
 func (m *MockJwtService) Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc {
 	m.ctrl.T.Helper()

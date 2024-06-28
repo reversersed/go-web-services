@@ -179,6 +179,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/auth": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Authorizes user's credentials by token. This needs to check if user's token is valid or get current authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Authorizes user",
+                "responses": {
+                    "200": {
+                        "description": "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache",
+                        "schema": {
+                            "$ref": "#/definitions/user.JwtResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Returns if user not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Finds user by login and password\nSets token to cookies\nLogin field can be provided with user login or email",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Authenticates user",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserAuthQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response. Returns user's login and roles",
+                        "schema": {
+                            "$ref": "#/definitions/user.JwtResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Returns when service can't find user by provided credentials (user not found)",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "501": {
+                        "description": "Returns when provided data was not validated",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/users/changename": {
             "patch": {
                 "security": [
@@ -370,55 +454,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/login": {
-            "post": {
-                "description": "Finds user by login and password\nSets token to cookies\nLogin field can be provided with user login or email",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Authenticates user",
-                "parameters": [
-                    {
-                        "description": "User credentials",
-                        "name": "query",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.UserAuthQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response. Returns user's login, roles and personal token and refresh token. Refresh token stores in cache",
-                        "schema": {
-                            "$ref": "#/definitions/user.JwtResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Returns when service can't find user by provided credentials (user not found)",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Returns when there's some internal error that needs to be fixed",
-                        "schema": {
-                            "$ref": "#/definitions/errormiddleware.Error"
-                        }
-                    },
-                    "501": {
-                        "description": "Returns when provided data was not validated",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -686,7 +721,7 @@ const docTemplate = `{
         "ApiKeyAuth": {
             "type": "apiKey",
             "name": "Authorization",
-            "in": "header"
+            "in": "Cookie"
         }
     }
 }`
