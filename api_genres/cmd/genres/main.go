@@ -42,11 +42,11 @@ func main() {
 	}
 
 	logger.Info("services initializing...")
-	bookStorage := db.NewStorage(db_client, "books", logger)
-	bookService := client.NewService(bookStorage, logger, cache, validator.New())
+	storage := db.NewStorage(db_client, "books", logger)
+	service := client.NewService(storage, logger, cache, validator.New())
 
 	logger.Info("handlers registration...")
-	handler := genre.Handler{Logger: logger, BookService: bookService}
+	handler := genre.Handler{Logger: logger, Service: service}
 	handler.Register(router)
 
 	logger.Info("starting application...")

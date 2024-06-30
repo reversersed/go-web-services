@@ -32,7 +32,23 @@ func TestRegister(t *testing.T) {
 		Name   string
 		Path   string
 		Method string
-	}{}
+	}{
+		{
+			Name:   "Add genre handler",
+			Path:   url_genres,
+			Method: http.MethodPost,
+		},
+		{
+			Name:   "Get genre by id handler",
+			Path:   url_genres,
+			Method: http.MethodGet,
+		},
+		{
+			Name:   "Get all genres handler",
+			Path:   url_all_genre,
+			Method: http.MethodGet,
+		},
+	}
 	router := httprouter.New()
 	h.Register(router)
 	for _, registerCase := range registerCases {
@@ -67,7 +83,7 @@ func TestHandlers(t *testing.T) {
 				if testCase.MockBehaviour != nil {
 					testCase.MockBehaviour(service)
 				}
-				h.BookService = service
+				h.Service = service
 
 				w := httptest.NewRecorder()
 				var r *http.Request

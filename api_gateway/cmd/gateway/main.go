@@ -15,6 +15,7 @@ import (
 	user "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/internal/config"
 	bh "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/book"
+	gh "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/genre"
 	auth "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/handlers/user"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/jwt"
@@ -72,6 +73,10 @@ func main() {
 	book_service := book.NewService(config.Urls.BookServiceURL, "/books", logger)
 	book_handler := &bh.Handler{Logger: logger, BookService: book_service, JwtService: jwtService, Validator: validator}
 	book_handler.Register(router)
+
+	genre_service := book.NewService(config.Urls.GenresServiceURL, "/genres", logger)
+	genre_handler := &gh.Handler{Logger: logger, GenreService: genre_service, JwtService: jwtService, Validator: validator}
+	genre_handler.Register(router)
 
 	logger.Info("starting application...")
 	start(router, logger, config.Server)

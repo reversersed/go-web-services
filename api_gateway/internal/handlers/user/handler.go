@@ -55,7 +55,7 @@ func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, url_find_user, h.Logger.Middleware(mw.Middleware(h.FindUser)))
 	router.HandlerFunc(http.MethodDelete, url_delete_user, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.DeleteUser))))
 	router.HandlerFunc(http.MethodPatch, url_update_user_login, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.UpdateUserLogin))))
-	h.Logger.Info("auth service registered")
+	h.Logger.Info("auth handlers registered")
 }
 
 // @Summary Update user's login

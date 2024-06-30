@@ -5,7 +5,12 @@
 package mock_client
 
 import (
+	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
+	client "github.com/reversersed/go-web-services/tree/main/api_genres/internal/client"
+	primitive "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -29,4 +34,49 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
+}
+
+// AddGenre mocks base method.
+func (m *MockStorage) AddGenre(ctx context.Context, genre *client.Genre) (*client.Genre, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddGenre", ctx, genre)
+	ret0, _ := ret[0].(*client.Genre)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddGenre indicates an expected call of AddGenre.
+func (mr *MockStorageMockRecorder) AddGenre(ctx, genre interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGenre", reflect.TypeOf((*MockStorage)(nil).AddGenre), ctx, genre)
+}
+
+// GetAllGenres mocks base method.
+func (m *MockStorage) GetAllGenres(ctx context.Context) ([]*client.Genre, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllGenres", ctx)
+	ret0, _ := ret[0].([]*client.Genre)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllGenres indicates an expected call of GetAllGenres.
+func (mr *MockStorageMockRecorder) GetAllGenres(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllGenres", reflect.TypeOf((*MockStorage)(nil).GetAllGenres), ctx)
+}
+
+// GetGenre mocks base method.
+func (m *MockStorage) GetGenre(ctx context.Context, id []primitive.ObjectID) ([]*client.Genre, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGenre", ctx, id)
+	ret0, _ := ret[0].([]*client.Genre)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGenre indicates an expected call of GetGenre.
+func (mr *MockStorageMockRecorder) GetGenre(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenre", reflect.TypeOf((*MockStorage)(nil).GetGenre), ctx, id)
 }

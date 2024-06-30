@@ -63,6 +63,11 @@ definitions:
           type: string
         type: array
     type: object
+  genre.AddGenreQuery:
+    properties:
+      name:
+        type: string
+    type: object
   genre.Genre:
     properties:
       id:
@@ -152,6 +157,7 @@ info:
 paths:
   /books:
     post:
+      description: Requires admin role to use
       parameters:
       - description: primitive object id to author of book
         in: formData
@@ -205,11 +211,15 @@ paths:
           schema:
             $ref: '#/definitions/book.Book'
         "400":
-          description: Return's if some fields was missing
+          description: Return's if handler received wrong content-type
           schema:
             $ref: '#/definitions/errormiddleware.Error'
         "401":
-          description: Return's if service can't authorize user or user's rights
+          description: User is not authorized
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "403":
+          description: Returns when user has no rights to use this handler
           schema:
             $ref: '#/definitions/errormiddleware.Error'
         "500":
@@ -226,6 +236,107 @@ paths:
       summary: Creates a new book
       tags:
       - books
+  /genres:
+    get:
+      description: |-
+        You can use multiple ids in query using , separator
+        Example: ?id=id1,id2,id3...
+      parameters:
+      - description: Genre IDs
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/genre.Genre'
+            type: array
+        "400":
+          description: Return's if received bad request
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Return's if genre was not found
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Get genres by id
+      tags:
+      - genres
+    post:
+      description: Requires admin role to use
+      parameters:
+      - description: Genre name
+        in: body
+        name: Genre
+        required: true
+        schema:
+          $ref: '#/definitions/genre.AddGenreQuery'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful response. Added genre
+          schema:
+            $ref: '#/definitions/genre.Genre'
+        "400":
+          description: Return's if request body was empty
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "401":
+          description: User is not authorized
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "403":
+          description: Returns when user has no rights to use this handler
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "501":
+          description: Returns if query was incorrect
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Adds a genre
+      tags:
+      - genres
+  /genres/all:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/genre.Genre'
+            type: array
+        "404":
+          description: Return's if service does not have data
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Get all genres stored in database
+      tags:
+      - genres
   /users:
     get:
       description: Get user using Id or login, both params are optional, but one of

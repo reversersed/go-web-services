@@ -27,24 +27,26 @@ func NewStorage(storage *mongo.Database, collection string, logger *logging.Logg
 	return db
 }
 
-func (d *db) GetGenre(ctx context.Context, id string) (*client.Genre, error) {
+func (d *db) GetGenre(ctx context.Context, id []primitive.ObjectID) ([]*client.Genre, error) {
 	d.RLock()
 	defer d.RUnlock()
 
-	filter := bson.M{"_id": id}
-	result := d.collection.FindOne(ctx, filter)
-
+	filter := bson.M{"_id": bson.M{"$in": id}}
+	result, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
 	if err := result.Err(); err != nil {
 		return nil, errormiddleware.NotFoundError([]string{"no genre with provided id"}, err.Error())
 	}
 
-	var genre client.Genre
-	err := result.Decode(&genre)
+	var genre []*client.Genre
+	err = result.All(ctx, &genre)
 	if err != nil {
 		return nil, err
 	}
 
-	return &genre, nil
+	return genre, nil
 }
 func (d *db) AddGenre(ctx context.Context, genre *client.Genre) (*client.Genre, error) {
 	d.Lock()
@@ -69,7 +71,7 @@ func (d *db) GetAllGenres(ctx context.Context) ([]*client.Genre, error) {
 
 	result, err := d.collection.Find(ctx, bson.D{})
 	if err != nil {
-		return nil, errormiddleware.NotFoundError([]string{"there's no genres"}, err.Error())
+		return nil, err
 	}
 
 	var genres []*client.Genre
@@ -77,6 +79,8 @@ func (d *db) GetAllGenres(ctx context.Context) ([]*client.Genre, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return genres, err
+	if len(genres) == 0 {
+		return nil, errormiddleware.NotFoundError([]string{"there's no genres"}, "marshalled array contained 0 elements")
+	}
+	return genres, nil
 }

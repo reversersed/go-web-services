@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_books/pkg/cache"
@@ -52,5 +53,8 @@ func (s *service) AddBook(ctx context.Context, query *InsertBookQuery) (*Book, e
 	if err != nil {
 		return nil, err
 	}
+	data, _ := json.Marshal(book)
+	s.cache.Set([]byte(book.Id.Hex()), data, int((time.Hour*6)/time.Second))
+	s.logger.Infof("created new book: %v", book)
 	return book, nil
 }

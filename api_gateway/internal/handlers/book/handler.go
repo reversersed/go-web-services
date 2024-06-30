@@ -36,16 +36,18 @@ type Handler struct {
 
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_add_book, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.AddBook)), "admin"))
-	h.Logger.Info("book service registered")
+	h.Logger.Info("book handlers registered")
 }
 
 // @Summary Creates a new book
+// @Description Requires admin role to use
 // @Tags books
 // @Produce json
 // @Param Book formData model.InsertBookQuery true "Book's name must be unique"
 // @Success 201 {object} model.Book "Successful response. Added book"
-// @Failure 400 {object} errormiddleware.Error "Return's if some fields was missing"
-// @Failure 401 {object} errormiddleware.Error "Return's if service can't authorize user or user's rights"
+// @Failure 400 {object} errormiddleware.Error "Return's if handler received wrong content-type"
+// @Failure 401 {object} errormiddleware.Error "User is not authorized"
+// @Failure 403 {object} errormiddleware.Error "Returns when user has no rights to use this handler"
 // @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
 // @Failure 501 {object} errormiddleware.Error "Returns if query was incorrect"
 // @Security ApiKeyAuth

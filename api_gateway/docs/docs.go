@@ -25,6 +25,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Requires admin role to use",
                 "produces": [
                     "application/json"
                 ],
@@ -101,13 +102,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Return's if some fields was missing",
+                        "description": "Return's if handler received wrong content-type",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
                     },
                     "401": {
-                        "description": "Return's if service can't authorize user or user's rights",
+                        "description": "User is not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Returns when user has no rights to use this handler",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -120,6 +127,154 @@ const docTemplate = `{
                     },
                     "501": {
                         "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/genres": {
+            "get": {
+                "description": "You can use multiple ids in query using , separator\nExample: ?id=id1,id2,id3...",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "genres"
+                ],
+                "summary": "Get genres by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Genre IDs",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/genre.Genre"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Return's if received bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Return's if genre was not found",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Requires admin role to use",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "genres"
+                ],
+                "summary": "Adds a genre",
+                "parameters": [
+                    {
+                        "description": "Genre name",
+                        "name": "Genre",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genre.AddGenreQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful response. Added genre",
+                        "schema": {
+                            "$ref": "#/definitions/genre.Genre"
+                        }
+                    },
+                    "400": {
+                        "description": "Return's if request body was empty",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "User is not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Returns when user has no rights to use this handler",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "501": {
+                        "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/genres/all": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "genres"
+                ],
+                "summary": "Get all genres stored in database",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/genre.Genre"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Return's if service does not have data",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -595,6 +750,14 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "genre.AddGenreQuery": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
