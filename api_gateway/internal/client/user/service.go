@@ -10,27 +10,27 @@ import (
 
 	"github.com/fatih/structs"
 
+	Base "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/rest"
 )
 
 type client struct {
-	base *rest.RestClient
-	Path string
+	Base.BaseClient
 }
 
-func NewService(baseURL, path string, logger *logging.Logger) *client {
-	return &client{
+func NewService(BaseURL, path string, logger *logging.Logger) *client {
+	return &client{BaseClient: Base.BaseClient{
 		Path: path,
-		base: &rest.RestClient{
-			BaseURL: baseURL,
+		Base: &rest.RestClient{
+			BaseURL: BaseURL,
 			HttpClient: &http.Client{
 				Timeout: 10 * time.Second,
 			},
 			Logger: logger,
 		},
-	}
+	}}
 }
 func (c *client) FindUser(ctx context.Context, userid string, login string) (*User, error) {
 	filter := make(map[string][]string, 1)
@@ -42,7 +42,7 @@ func (c *client) FindUser(ctx context.Context, userid string, login string) (*Us
 		return nil, errormiddleware.BadRequestError([]string{"query has to have one of parameters", "login: user login", "id: user id"}, "bad request provided")
 	}
 
-	uri, err := c.base.BuildURL(c.Path, filter)
+	uri, err := c.Base.BuildURL(c.Path, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *client) FindUser(ctx context.Context, userid string, login string) (*Us
 	if err != nil {
 		return nil, fmt.Errorf("failed while request creation: %v", err)
 	}
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -68,16 +68,16 @@ func (c *client) FindUser(ctx context.Context, userid string, login string) (*Us
 	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, error) {
-	c.base.Logger.Info("building request url...")
+	c.Base.Logger.Info("building request url...")
 	var uri string
 	var err error
 	if len(code) > 0 {
 		filter := map[string][]string{
 			"code": {code},
 		}
-		uri, err = c.base.BuildURL(c.Path+"/email", filter)
+		uri, err = c.Base.BuildURL(c.Path+"/email", filter)
 	} else {
-		uri, err = c.base.BuildURL(c.Path+"/email", nil)
+		uri, err = c.Base.BuildURL(c.Path+"/email", nil)
 	}
 	if err != nil {
 		return 0, fmt.Errorf("failed to build url: %v", err)
@@ -89,7 +89,7 @@ func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, e
 	if err != nil {
 		return 0, fmt.Errorf("failed while request creation: %v", err)
 	}
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return 0, err
 	}
@@ -99,8 +99,8 @@ func (c *client) UserEmailConfirmation(ctx context.Context, code string) (int, e
 	return 0, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuery) (*User, error) {
-	c.base.Logger.Info("building request url...")
-	uri, err := c.base.BuildURL(c.Path+"/auth", nil)
+	c.Base.Logger.Info("building request url...")
+	uri, err := c.Base.BuildURL(c.Path+"/auth", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
 	}
@@ -121,7 +121,7 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	response, err := c.base.SendRequest(req.WithContext(reqCtx))
+	response, err := c.Base.SendRequest(req.WithContext(reqCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -136,8 +136,8 @@ func (c *client) AuthByLoginAndPassword(ctx context.Context, query *UserAuthQuer
 	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*User, error) {
-	c.base.Logger.Info("building request url...")
-	uri, err := c.base.BuildURL(c.Path+"/register", nil)
+	c.Base.Logger.Info("building request url...")
+	uri, err := c.Base.BuildURL(c.Path+"/register", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
 	}
@@ -159,7 +159,7 @@ func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*U
 	defer cancel()
 
 	req = req.WithContext(reqCtx)
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func (c *client) RegisterUser(ctx context.Context, query *UserRegisterQuery) (*U
 	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
-	c.base.Logger.Info("building request url...")
-	uri, err := c.base.BuildURL(c.Path+"/delete", nil)
+	c.Base.Logger.Info("building request url...")
+	uri, err := c.Base.BuildURL(c.Path+"/delete", nil)
 	if err != nil {
 		return fmt.Errorf("failed to build url: %v", err)
 	}
@@ -197,7 +197,7 @@ func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
 	defer cancel()
 
 	req = req.WithContext(reqCtx)
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return err
 	}
@@ -207,8 +207,8 @@ func (c *client) DeleteUser(ctx context.Context, query *DeleteUserQuery) error {
 	return errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
 func (c *client) UpdateUserLogin(ctx context.Context, query *UpdateUserLoginQuery) (*User, error) {
-	c.base.Logger.Info("building request url...")
-	uri, err := c.base.BuildURL(c.Path+"/changename", nil)
+	c.Base.Logger.Info("building request url...")
+	uri, err := c.Base.BuildURL(c.Path+"/changename", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build url: %v", err)
 	}
@@ -230,7 +230,7 @@ func (c *client) UpdateUserLogin(ctx context.Context, query *UpdateUserLoginQuer
 	defer cancel()
 
 	req = req.WithContext(reqCtx)
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return nil, err
 	}

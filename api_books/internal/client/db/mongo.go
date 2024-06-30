@@ -13,7 +13,7 @@ import (
 )
 
 type db struct {
-	sync.Mutex
+	sync.RWMutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
@@ -26,8 +26,8 @@ func NewStorage(storage *mongo.Database, collection string, logger *logging.Logg
 	return db
 }
 func (d *db) GetBookByName(ctx context.Context, name string) (*client.Book, error) {
-	d.Lock()
-	defer d.Unlock()
+	d.RLock()
+	defer d.RUnlock()
 
 	result := d.collection.FindOne(ctx, bson.M{"name": name})
 

@@ -14,7 +14,7 @@ import (
 )
 
 type db struct {
-	sync.Mutex
+	sync.RWMutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
@@ -45,8 +45,8 @@ func (d *db) CreateUser(ctx context.Context, user_id, login string) error {
 	return nil
 }
 func (d *db) IsUserExists(ctx context.Context, user_id string) (bool, error) {
-	d.Lock()
-	defer d.Unlock()
+	d.RLock()
+	defer d.RUnlock()
 	id, err := primitive.ObjectIDFromHex(user_id)
 	if err != nil {
 		return false, err

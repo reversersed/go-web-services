@@ -8,31 +8,31 @@ import (
 	"net/http"
 	"time"
 
+	base "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/logging"
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/rest"
 )
 
 type client struct {
-	base *rest.RestClient
-	Path string
+	base.BaseClient
 }
 
 func NewService(baseURL, path string, logger *logging.Logger) *client {
-	return &client{
+	return &client{BaseClient: base.BaseClient{
 		Path: path,
-		base: &rest.RestClient{
+		Base: &rest.RestClient{
 			BaseURL: baseURL,
 			HttpClient: &http.Client{
 				Timeout: 10 * time.Second,
 			},
 			Logger: logger,
 		},
-	}
+	}}
 }
 
 func (c *client) AddBook(ctx context.Context, body io.Reader, contentType string) (*Book, error) {
-	uri, err := c.base.BuildURL(c.Path, nil)
+	uri, err := c.Base.BuildURL(c.Path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *client) AddBook(ctx context.Context, body io.Reader, contentType string
 		return nil, fmt.Errorf("failed while request creation: %v", err)
 	}
 	req.Header.Add("Content-Type", contentType)
-	response, err := c.base.SendRequest(req)
+	response, err := c.Base.SendRequest(req)
 	if err != nil {
 		return nil, err
 	}

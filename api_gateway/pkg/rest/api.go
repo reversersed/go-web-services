@@ -18,6 +18,9 @@ type CustomResponse struct {
 func (r *CustomResponse) Body() io.ReadCloser {
 	return r.response.Body
 }
+func (r *CustomResponse) ReadBody() ([]byte, error) {
+	return io.ReadAll(r.response.Body)
+}
 func (r *CustomResponse) StatusCode() int {
 	return r.response.StatusCode
 }

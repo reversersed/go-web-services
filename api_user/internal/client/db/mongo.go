@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_user/internal/client"
@@ -15,6 +16,7 @@ import (
 )
 
 type db struct {
+	sync.RWMutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
@@ -28,6 +30,9 @@ func NewStorage(storage *mongo.Database, collection string, logger *logging.Logg
 	return db
 }
 func (d *db) seedAdminAccount() {
+	d.Lock()
+	defer d.Unlock()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -56,6 +61,9 @@ func (d *db) seedAdminAccount() {
 	d.logger.Info("admin account exists. seed not executed")
 }
 func (d *db) ApproveUserEmail(ctx context.Context, id string) error {
+	d.Lock()
+	defer d.Unlock()
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -76,6 +84,9 @@ func (d *db) ApproveUserEmail(ctx context.Context, id string) error {
 	return nil
 }
 func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error) {
+	d.RLock()
+	defer d.RUnlock()
+
 	filter := bson.M{"login": login}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -93,6 +104,9 @@ func (d *db) FindByLogin(ctx context.Context, login string) (*client.User, error
 	return &u, nil
 }
 func (d *db) FindByEmail(ctx context.Context, email string) (*client.User, error) {
+	d.RLock()
+	defer d.RUnlock()
+
 	filter := bson.M{"email": email}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -110,6 +124,9 @@ func (d *db) FindByEmail(ctx context.Context, email string) (*client.User, error
 	return &u, nil
 }
 func (d *db) AddUser(ctx context.Context, user *client.User) (string, error) {
+	d.Lock()
+	defer d.Unlock()
+
 	contx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -126,6 +143,9 @@ func (d *db) AddUser(ctx context.Context, user *client.User) (string, error) {
 	return "", fmt.Errorf("cant resolve user id")
 }
 func (d *db) FindById(ctx context.Context, id string) (*client.User, error) {
+	d.RLock()
+	defer d.RUnlock()
+
 	primitive_id, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -147,6 +167,9 @@ func (d *db) FindById(ctx context.Context, id string) (*client.User, error) {
 	return &u, nil
 }
 func (d *db) DeleteUser(ctx context.Context, userId string) error {
+	d.Lock()
+	defer d.Unlock()
+	
 	primitive_id, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return err
@@ -163,6 +186,9 @@ func (d *db) DeleteUser(ctx context.Context, userId string) error {
 	return nil
 }
 func (d *db) ChangeUserLogin(ctx context.Context, userId, newLogin string) error {
+	d.Lock()
+	defer d.Unlock()
+	
 	primitive_id, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return err

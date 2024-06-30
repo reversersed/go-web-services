@@ -9,7 +9,7 @@ import (
 )
 
 type db struct {
-	sync.Mutex
+	sync.RWMutex
 	collection *mongo.Collection
 	logger     *logging.Logger
 }
