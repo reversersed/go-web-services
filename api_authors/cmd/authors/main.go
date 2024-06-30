@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -52,7 +53,7 @@ func main() {
 	logger.Info("starting application...")
 	start(router, logger, config.Server)
 }
-func start(router *httprouter.Router, logger *logging.Logger, cfg *config.ServerConfig) {
+func start(router *httprouter.Router, logger *logging.Logger, cfg *config.ServerConfig, closers ...io.Closer) {
 	var server *http.Server
 	var listener net.Listener
 
@@ -72,7 +73,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Server
 	}
 
 	go shutdown.Graceful(logger, []os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
-		server)
+		append(closers, server)...)
 
 	logger.Infof("application initialized and started as %s", cfg.Environment)
 

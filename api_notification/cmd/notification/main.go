@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/client/db"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/config"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/handlers/notification"
-	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/rabbitmq"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/internal/rabbitmq/receivers"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/cache/freecache"
 	"github.com/reversersed/go-web-services/tree/main/api_notification/pkg/logging"
@@ -72,8 +72,7 @@ func main() {
 	logger.Info("starting application...")
 	start(router, logger, config.Server, rabbit, notifReceiver, userDeletedReceiver, userLoginChangedReceiver)
 }
-func start(router *httprouter.Router, logger *logging.Logger, cfg *config.ServerConfig, rabbit *rabbitClient.RabbitClient,
-	notificationReceiver, userDeletedReceiver, userLoginChangedReceiver rabbitmq.Receiver) {
+func start(router *httprouter.Router, logger *logging.Logger, cfg *config.ServerConfig, closers ...io.Closer) {
 	var server *http.Server
 	var listener net.Listener
 
@@ -93,7 +92,7 @@ func start(router *httprouter.Router, logger *logging.Logger, cfg *config.Server
 	}
 
 	go shutdown.Graceful(logger, []os.Signal{syscall.SIGABRT, syscall.SIGQUIT, syscall.SIGHUP, os.Interrupt, syscall.SIGTERM},
-		server, rabbit, notificationReceiver, userDeletedReceiver, userLoginChangedReceiver)
+		append(closers, server)...)
 
 	logger.Infof("application initialized and started as %s", cfg.Environment)
 
