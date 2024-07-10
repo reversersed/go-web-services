@@ -18,7 +18,7 @@ type Book struct {
 	AuthorId  primitive.ObjectID   `json:"-" bson:"author"`
 	Author    *Author              `json:"author,omitempty" bson:"-"`
 	GenresId  []primitive.ObjectID `json:"-" bson:"genres"`
-	Genres    *[]Genre             `json:"genres,omitempty" bson:"-"`
+	Genres    []*Genre              `json:"genres,omitempty" bson:"-"`
 	Pages     int                  `json:"pages" bson:"-"`
 	Year      int                  `json:"year" bson:"year"`
 	FilePath  string               `json:"file" bson:"filepath"`
