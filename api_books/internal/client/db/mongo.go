@@ -2,14 +2,17 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/reversersed/go-web-services/tree/main/api_books/internal/client"
+	"github.com/reversersed/go-web-services/tree/main/api_books/pkg/errormiddleware"
 	"github.com/reversersed/go-web-services/tree/main/api_books/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type db struct {
@@ -55,4 +58,33 @@ func (d *db) AddBook(ctx context.Context, book *client.Book) (string, error) {
 	}
 
 	return id.Hex(), nil
+}
+func (d *db) GetByFilter(ctx context.Context, filter map[string]string, offset, limit int) ([]*client.Book, error) {
+	d.RLock()
+	defer d.RUnlock()
+
+	options := options.Find().SetSkip(int64(offset)).SetLimit(int64(limit)).SetSort(bson.M{"year": -1})
+	filters := make([]bson.M, 0)
+
+	for i, v := range filter {
+		switch i {
+		case "year":
+			filters = append(filters, bson.M{"year": bson.M{"$gte": v}})
+		default:
+			return nil, errormiddleware.BadRequestError([]string{"invalid filter received"}, fmt.Sprintf("filter %s: %s is not supported", i, v))
+		}
+	}
+
+	result, err := d.collection.Find(ctx, filters, options)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, errormiddleware.NotFoundError([]string{"no books found"}, err.Error())
+	} else if err != nil {
+		return nil, err
+	}
+	var books []*client.Book
+	err = result.Decode(&books)
+	if err != nil {
+		return nil, err
+	}
+	return books, nil
 }
