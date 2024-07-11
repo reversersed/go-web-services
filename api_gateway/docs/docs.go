@@ -31,6 +31,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "0",
                         "description": "Offset to books. Must be present, starting with 0",
                         "name": "offset",
                         "in": "query",
@@ -38,6 +39,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "15",
                         "description": "Max amount of docs to return. Must be greater than 0",
                         "name": "limit",
                         "in": "query",
@@ -182,6 +184,57 @@ const docTemplate = `{
                     },
                     "501": {
                         "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Get a book by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/book.Book"
+                        }
+                    },
+                    "400": {
+                        "description": "Return's if handler received wrong content-type",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Return's if book is not exists",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
                         "schema": {
                             "$ref": "#/definitions/errormiddleware.Error"
                         }
@@ -356,6 +409,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "admin",
                         "description": "User login",
                         "name": "login",
                         "in": "query"

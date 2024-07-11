@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_gateway/pkg/errormiddleware"
@@ -16,8 +17,8 @@ type BaseClient struct {
 	Path string
 }
 
-func (c *BaseClient) SendPostGeneric(ctx context.Context, path string, body []byte) ([]byte, error) {
-	uri, err := c.Base.BuildURL(c.Path+path, nil)
+func (c *BaseClient) SendPostGeneric(ctx context.Context, way string, body []byte) ([]byte, error) {
+	uri, err := c.Base.BuildURL(path.Join(c.Path, way), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +39,8 @@ func (c *BaseClient) SendPostGeneric(ctx context.Context, path string, body []by
 	}
 	return nil, errormiddleware.NewError(response.Error.Message, response.Error.ErrorCode, response.Error.DeveloperMessage)
 }
-func (c *BaseClient) SendGetGeneric(ctx context.Context, path string, params map[string][]string) ([]byte, error) {
-	uri, err := c.Base.BuildURL(c.Path+path, params)
+func (c *BaseClient) SendGetGeneric(ctx context.Context, way string, params map[string][]string) ([]byte, error) {
+	uri, err := c.Base.BuildURL(path.Join(c.Path, way), params)
 	if err != nil {
 		return nil, err
 	}

@@ -171,7 +171,7 @@ func (h *Handler) EmailConfirmation(w http.ResponseWriter, r *http.Request) erro
 // @Produce json
 // @Tags users
 // @Param id query string false "User id"
-// @Param login query string false "User login"
+// @Param login query string false "User login" example(admin)
 // @Success 200 {object} model.User "Successful response"
 // @Failure 400 {object} errormiddleware.Error "Returns when service didn't get a parameters"
 // @Failure 404 {object} errormiddleware.Error "Returns when service can't find user by provided credentials (user not found)"

@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	url_add_book = "/api/v1/books"
-	url_get_book = "/api/v1/books"
+	url_add_book       = "/api/v1/books"
+	url_get_book       = "/api/v1/books"
+	url_get_book_by_id = "/api/v1/books/:id"
 )
 
 //go:generate mockgen -source=handler.go -destination=mocks/service_mock.go
@@ -26,6 +27,7 @@ const (
 type BookService interface {
 	AddBook(ctx context.Context, body io.Reader, contentType string) (*model.Book, error)
 	FindBooks(ctx context.Context, params url.Values) ([]*model.Book, error)
+	GetBook(ctx context.Context, id string) (*model.Book, error)
 }
 type JwtService interface {
 	Middleware(h http.HandlerFunc, roles ...string) http.HandlerFunc
@@ -40,7 +42,35 @@ type Handler struct {
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, url_add_book, h.JwtService.Middleware(h.Logger.Middleware(mw.Middleware(h.AddBook)), "admin"))
 	router.HandlerFunc(http.MethodGet, url_get_book, h.Logger.Middleware(mw.Middleware(h.FindBooks)))
+	router.HandlerFunc(http.MethodGet, url_get_book_by_id, h.Logger.Middleware(mw.Middleware(h.GetBook)))
 	h.Logger.Info("book handlers registered")
+}
+
+// @Summary Get a book by id
+// @Tags books
+// @Produce json
+// @Param id path string true "Book Id"
+// @Success 200 {object} model.Book "Successful response"
+// @Failure 400 {object} errormiddleware.Error "Return's if handler received wrong content-type"
+// @Failure 404 {object} errormiddleware.Error "Return's if book is not exists"
+// @Failure 500 {object} errormiddleware.Error "Returns when there's some internal error that needs to be fixed or smtp server is not responding"
+// @Security ApiKeyAuth
+// @Router /books/{id} [get]
+func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) error {
+	params := httprouter.ParamsFromContext(r.Context())
+	if len(params.ByName("id")) == 0 {
+		return mw.BadRequestError([]string{"bad request"}, "id route must be presented")
+	}
+
+	book, err := h.BookService.GetBook(r.Context(), params.ByName("id"))
+	if err != nil {
+		return err
+	}
+
+	bytes, _ := json.Marshal(book)
+	w.WriteHeader(http.StatusOK)
+	w.Write(bytes)
+	return nil
 }
 
 // @Summary Creates a new book
@@ -76,8 +106,8 @@ func (h *Handler) AddBook(w http.ResponseWriter, r *http.Request) error {
 // @Description If it's impossible to fetch author or genres, the field will be null
 // @Tags books
 // @Produce json
-// @Param offset query string true "Offset to books. Must be present, starting with 0"
-// @Param limit query string true "Max amount of docs to return. Must be greater than 0"
+// @Param offset query string true "Offset to books. Must be present, starting with 0" example(0)
+// @Param limit query string true "Max amount of docs to return. Must be greater than 0" example(15)
 // @Success 200 {array} model.Book "Successful response"
 // @Failure 400 {object} errormiddleware.Error "Returns if query was incorrect"
 // @Failure 404 {object} errormiddleware.Error "Returns if there are no documents found"

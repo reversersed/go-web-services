@@ -65,6 +65,21 @@ func (mr *MockServiceMockRecorder) FindBooks(ctx, filters, offset, limit interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBooks", reflect.TypeOf((*MockService)(nil).FindBooks), ctx, filters, offset, limit)
 }
 
+// GetBook mocks base method.
+func (m *MockService) GetBook(ctx context.Context, id string) (*client.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBook", ctx, id)
+	ret0, _ := ret[0].(*client.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBook indicates an expected call of GetBook.
+func (mr *MockServiceMockRecorder) GetBook(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBook", reflect.TypeOf((*MockService)(nil).GetBook), ctx, id)
+}
+
 // IsBookExists mocks base method.
 func (m *MockService) IsBookExists(ctx context.Context, name string) bool {
 	m.ctrl.T.Helper()

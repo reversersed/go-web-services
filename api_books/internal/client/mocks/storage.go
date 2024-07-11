@@ -10,6 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	client "github.com/reversersed/go-web-services/tree/main/api_books/internal/client"
+	primitive "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -48,6 +49,21 @@ func (m *MockStorage) AddBook(ctx context.Context, book *client.Book) (string, e
 func (mr *MockStorageMockRecorder) AddBook(ctx, book interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBook", reflect.TypeOf((*MockStorage)(nil).AddBook), ctx, book)
+}
+
+// GetBookById mocks base method.
+func (m *MockStorage) GetBookById(ctx context.Context, id primitive.ObjectID) (*client.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBookById", ctx, id)
+	ret0, _ := ret[0].(*client.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBookById indicates an expected call of GetBookById.
+func (mr *MockStorageMockRecorder) GetBookById(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookById", reflect.TypeOf((*MockStorage)(nil).GetBookById), ctx, id)
 }
 
 // GetBookByName mocks base method.

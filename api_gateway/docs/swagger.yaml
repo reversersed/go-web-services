@@ -162,11 +162,13 @@ paths:
         If it's impossible to fetch author or genres, the field will be null
       parameters:
       - description: Offset to books. Must be present, starting with 0
+        example: "0"
         in: query
         name: offset
         required: true
         type: string
       - description: Max amount of docs to return. Must be greater than 0
+        example: "15"
         in: query
         name: limit
         required: true
@@ -274,6 +276,39 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Creates a new book
+      tags:
+      - books
+  /books/{id}:
+    get:
+      parameters:
+      - description: Book Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/book.Book'
+        "400":
+          description: Return's if handler received wrong content-type
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Return's if book is not exists
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a book by id
       tags:
       - books
   /genres:
@@ -387,6 +422,7 @@ paths:
         name: id
         type: string
       - description: User login
+        example: admin
         in: query
         name: login
         type: string

@@ -68,6 +68,21 @@ func (mr *MockBookServiceMockRecorder) FindBooks(ctx, params interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBooks", reflect.TypeOf((*MockBookService)(nil).FindBooks), ctx, params)
 }
 
+// GetBook mocks base method.
+func (m *MockBookService) GetBook(ctx context.Context, id string) (*book.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBook", ctx, id)
+	ret0, _ := ret[0].(*book.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBook indicates an expected call of GetBook.
+func (mr *MockBookServiceMockRecorder) GetBook(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBook", reflect.TypeOf((*MockBookService)(nil).GetBook), ctx, id)
+}
+
 // MockJwtService is a mock of JwtService interface.
 type MockJwtService struct {
 	ctrl     *gomock.Controller

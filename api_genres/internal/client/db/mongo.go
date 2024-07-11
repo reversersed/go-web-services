@@ -41,7 +41,7 @@ func (d *db) seedGenres() {
 	for _, v := range preinstalledGenres {
 		result := d.collection.FindOne(ctx, bson.M{"name": v})
 		if err := result.Err(); errors.Is(err, mongo.ErrNoDocuments) {
-			d.logger.Info("seeding genre %s...", v)
+			d.logger.Infof("seeding genre %s...", v)
 			genre := &client.Genre{
 				Name: v,
 			}

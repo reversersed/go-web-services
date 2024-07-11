@@ -23,14 +23,16 @@ import (
 //go:generate mockgen -source=handler.go -destination=mocks/service_mock.go
 
 const (
-	url_add_book = "/books"
-	url_get_book = "/books"
+	url_add_book        = "/books"
+	url_get_books       = "/books"
+	url_find_book_by_id = "/books/:id"
 )
 
 type Service interface {
 	IsBookExists(ctx context.Context, name string) bool
 	AddBook(ctx context.Context, query *client.InsertBookQuery) (*client.Book, error)
 	FindBooks(ctx context.Context, filters map[string]string, offset, limit int) ([]*client.Book, error)
+	GetBook(ctx context.Context, id string) (*client.Book, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -39,7 +41,24 @@ type Handler struct {
 
 func (h *Handler) Register(route *httprouter.Router) {
 	route.HandlerFunc(http.MethodPost, url_add_book, h.Logger.Middleware(errormiddleware.Middleware(h.AddBookHandler)))
-	route.HandlerFunc(http.MethodGet, url_get_book, h.Logger.Middleware(errormiddleware.Middleware(h.GetBooks)))
+	route.HandlerFunc(http.MethodGet, url_get_books, h.Logger.Middleware(errormiddleware.Middleware(h.GetBooks)))
+	route.HandlerFunc(http.MethodGet, url_find_book_by_id, h.Logger.Middleware(errormiddleware.Middleware(h.FindBook)))
+}
+func (h *Handler) FindBook(w http.ResponseWriter, r *http.Request) error {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id := params.ByName("id")
+	if len(id) == 0 {
+		return errormiddleware.BadRequestError([]string{"id: parameter is required"}, "id path is not present")
+	}
+	book, err := h.BookService.GetBook(r.Context(), id)
+	if err != nil {
+		return err
+	}
+	bytes, _ := json.Marshal(book)
+	w.WriteHeader(http.StatusOK)
+	w.Write(bytes)
+	return nil
 }
 func (h *Handler) GetBooks(w http.ResponseWriter, r *http.Request) error {
 	filters := make(map[string]string, 0)

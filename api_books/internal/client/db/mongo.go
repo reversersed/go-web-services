@@ -59,6 +59,23 @@ func (d *db) AddBook(ctx context.Context, book *client.Book) (string, error) {
 
 	return id.Hex(), nil
 }
+func (d *db) GetBookById(ctx context.Context, id primitive.ObjectID) (*client.Book, error) {
+	d.RLock()
+	defer d.RUnlock()
+
+	filter := bson.M{"_id": id}
+	result := d.collection.FindOne(ctx, filter)
+	if err := result.Err(); errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, errormiddleware.NotFoundError([]string{"book not exists"}, err.Error())
+	} else if err != nil {
+		return nil, err
+	}
+
+	var book client.Book
+	result.Decode(&book)
+
+	return &book, nil
+}
 func (d *db) GetByFilter(ctx context.Context, filter map[string]string, offset, limit int) ([]*client.Book, error) {
 	d.RLock()
 	defer d.RUnlock()
@@ -79,11 +96,12 @@ func (d *db) GetByFilter(ctx context.Context, filter map[string]string, offset, 
 	if err != nil {
 		return nil, err
 	}
-	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+	if err := result.Err(); errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, errormiddleware.NotFoundError([]string{"no books found"}, result.Err().Error())
 	} else if err != nil {
 		return nil, err
 	}
+
 	var books []*client.Book
 	err = result.All(ctx, &books)
 	if err != nil {

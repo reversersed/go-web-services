@@ -31,6 +31,19 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 		},
 	}}
 }
+func (c *client) GetBook(ctx context.Context, id string) (*Book, error) {
+	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	bookByte, err := c.SendGetGeneric(cntx, id, nil)
+	if err != nil {
+		return nil, err
+	}
+	var book Book
+	json.Unmarshal(bookByte, &book)
+
+	return &book, nil
+}
 func (c *client) FindBooks(ctx context.Context, params url.Values) ([]*Book, error) {
 	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
