@@ -8,6 +8,7 @@ import (
 	context "context"
 	io "io"
 	http "net/http"
+	url "net/url"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -50,6 +51,21 @@ func (m *MockBookService) AddBook(ctx context.Context, body io.Reader, contentTy
 func (mr *MockBookServiceMockRecorder) AddBook(ctx, body, contentType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBook", reflect.TypeOf((*MockBookService)(nil).AddBook), ctx, body, contentType)
+}
+
+// FindBooks mocks base method.
+func (m *MockBookService) FindBooks(ctx context.Context, params url.Values) ([]*book.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindBooks", ctx, params)
+	ret0, _ := ret[0].([]*book.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindBooks indicates an expected call of FindBooks.
+func (mr *MockBookServiceMockRecorder) FindBooks(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBooks", reflect.TypeOf((*MockBookService)(nil).FindBooks), ctx, params)
 }
 
 // MockJwtService is a mock of JwtService interface.

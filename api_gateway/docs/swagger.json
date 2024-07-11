@@ -12,6 +12,61 @@
     "basePath": "/api/v1/",
     "paths": {
         "/books": {
+            "get": {
+                "description": "Author and genres are fetching from another microservices and then storing in cache\nIf it's impossible to fetch author or genres, the field will be null",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Finds a books by filters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Offset to books. Must be present, starting with 0",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Max amount of docs to return. Must be greater than 0",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/book.Book"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Returns if query was incorrect",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Returns if there are no documents found",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there's some internal error that needs to be fixed or smtp server is not responding",
+                        "schema": {
+                            "$ref": "#/definitions/errormiddleware.Error"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {

@@ -63,28 +63,34 @@ func (d *db) GetByFilter(ctx context.Context, filter map[string]string, offset, 
 	d.RLock()
 	defer d.RUnlock()
 
-	options := options.Find().SetSkip(int64(offset)).SetLimit(int64(limit)).SetSort(bson.M{"year": -1})
-	filters := make([]bson.M, 0)
+	options := options.Find().SetSkip(int64(offset)).SetLimit(int64(limit)).SetSort(bson.M{"name": -1})
+	filters := make(bson.D, 0)
 
 	for i, v := range filter {
 		switch i {
 		case "year":
-			filters = append(filters, bson.M{"year": bson.M{"$gte": v}})
+			filters = append(filters, bson.E{Key: "year", Value: bson.M{"$gte": v}})
 		default:
-			return nil, errormiddleware.BadRequestError([]string{"invalid filter received"}, fmt.Sprintf("filter %s: %s is not supported", i, v))
+			return nil, errormiddleware.BadRequestError([]string{"invalid filter received"}, fmt.Sprintf("filter %s: %s is unsupported", i, v))
 		}
 	}
 
 	result, err := d.collection.Find(ctx, filters, options)
-	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, errormiddleware.NotFoundError([]string{"no books found"}, err.Error())
+	if err != nil {
+		return nil, err
+	}
+	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return nil, errormiddleware.NotFoundError([]string{"no books found"}, result.Err().Error())
 	} else if err != nil {
 		return nil, err
 	}
 	var books []*client.Book
-	err = result.Decode(&books)
+	err = result.All(ctx, &books)
 	if err != nil {
 		return nil, err
+	}
+	if len(books) == 0 {
+		return nil, errormiddleware.NotFoundError([]string{"no books found"}, "document slice containes 0 items")
 	}
 	return books, nil
 }

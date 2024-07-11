@@ -64,3 +64,18 @@ func (mr *MockStorageMockRecorder) GetBookByName(ctx, name interface{}) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookByName", reflect.TypeOf((*MockStorage)(nil).GetBookByName), ctx, name)
 }
+
+// GetByFilter mocks base method.
+func (m *MockStorage) GetByFilter(ctx context.Context, filter map[string]string, offset, limit int) ([]*client.Book, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByFilter", ctx, filter, offset, limit)
+	ret0, _ := ret[0].([]*client.Book)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByFilter indicates an expected call of GetByFilter.
+func (mr *MockStorageMockRecorder) GetByFilter(ctx, filter, offset, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByFilter", reflect.TypeOf((*MockStorage)(nil).GetByFilter), ctx, filter, offset, limit)
+}

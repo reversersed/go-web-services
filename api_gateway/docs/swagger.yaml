@@ -156,6 +156,46 @@ info:
   version: "1.0"
 paths:
   /books:
+    get:
+      description: |-
+        Author and genres are fetching from another microservices and then storing in cache
+        If it's impossible to fetch author or genres, the field will be null
+      parameters:
+      - description: Offset to books. Must be present, starting with 0
+        in: query
+        name: offset
+        required: true
+        type: string
+      - description: Max amount of docs to return. Must be greater than 0
+        in: query
+        name: limit
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/book.Book'
+            type: array
+        "400":
+          description: Returns if query was incorrect
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "404":
+          description: Returns if there are no documents found
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+        "500":
+          description: Returns when there's some internal error that needs to be fixed
+            or smtp server is not responding
+          schema:
+            $ref: '#/definitions/errormiddleware.Error'
+      summary: Finds a books by filters
+      tags:
+      - books
     post:
       description: Requires admin role to use
       parameters:

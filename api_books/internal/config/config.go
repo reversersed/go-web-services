@@ -26,10 +26,15 @@ type RabbitConfig struct {
 	Rabbit_User string `env:"RABBITMQ_USER" env-required:"true"`
 	Rabbit_Pass string `env:"RABBITMQ_PASS" env-required:"true"`
 }
+type UrlConfig struct {
+	GenreApiAdress  string `env:"GENRE_API_URL" env-required:"true"`
+	AuthorApiAdress string `env:"AUTHOR_API_URL" env-required:"true"`
+}
 type Config struct {
 	Server   *ServerConfig
 	Database *DatabaseConfig
 	Rabbit   *RabbitConfig
+	Urls     *UrlConfig
 }
 
 var cfg *Config
@@ -42,6 +47,7 @@ func GetConfig() *Config {
 		srvCfg := &ServerConfig{}
 		dbCfg := &DatabaseConfig{}
 		rabbitCfg := &RabbitConfig{}
+		urlCfg := &UrlConfig{}
 
 		if err := cleanenv.ReadConfig("config/.env", srvCfg); err != nil {
 			desc, _ := cleanenv.GetDescription(cfg, nil)
@@ -61,10 +67,16 @@ func GetConfig() *Config {
 			logger.Error(desc)
 			logger.Fatal(err)
 		}
+		if err := cleanenv.ReadConfig("config/.env", urlCfg); err != nil {
+			desc, _ := cleanenv.GetDescription(cfg, nil)
+			logger.Error(desc)
+			logger.Fatal(err)
+		}
 		cfg = &Config{
 			Server:   srvCfg,
 			Database: dbCfg,
 			Rabbit:   rabbitCfg,
+			Urls:     urlCfg,
 		}
 	})
 	return cfg

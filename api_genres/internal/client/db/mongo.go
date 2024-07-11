@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/reversersed/go-web-services/tree/main/api_genres/internal/client"
 	"github.com/reversersed/go-web-services/tree/main/api_genres/pkg/errormiddleware"
@@ -24,9 +25,42 @@ func NewStorage(storage *mongo.Database, collection string, logger *logging.Logg
 		collection: storage.Collection(collection),
 		logger:     logger,
 	}
+	defer db.seedGenres()
 	return db
 }
+func (d *db) seedGenres() {
+	d.Lock()
+	defer d.Unlock()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	preinstalledGenres := []string{"Детектив", "Фентези", "Фантастика", "Комиксы", "Бизнес-менеджмент", "Хобби", "Детские книги", "История", "Легкое чтение", "Серьезное чтение"}
+
+	d.logger.Infof("trying to seed %d genres...", len(preinstalledGenres))
+	for _, v := range preinstalledGenres {
+		result := d.collection.FindOne(ctx, bson.M{"name": v})
+		if err := result.Err(); errors.Is(err, mongo.ErrNoDocuments) {
+			d.logger.Info("seeding genre %s...", v)
+			genre := &client.Genre{
+				Name: v,
+			}
+			response, err := d.collection.InsertOne(ctx, genre)
+			if err != nil {
+				d.logger.Fatalf("cannot seed genre: %v", err)
+			}
+			id, ok := response.InsertedID.(primitive.ObjectID)
+			if !ok {
+				d.logger.Fatalf("can't create id for genre")
+			}
+			d.logger.Infof("genre %s seeded with id %v", v, id.Hex())
+			continue
+		} else if err != nil {
+			d.logger.Fatalf("unexcepted error while genres seeding: %v", err)
+		}
+		d.logger.Infof("genre %s already exists. not seeding", v)
+	}
+}
 func (d *db) GetGenre(ctx context.Context, id []primitive.ObjectID) ([]*client.Genre, error) {
 	d.RLock()
 	defer d.RUnlock()

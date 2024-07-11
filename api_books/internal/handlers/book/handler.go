@@ -24,11 +24,13 @@ import (
 
 const (
 	url_add_book = "/books"
+	url_get_book = "/books"
 )
 
 type Service interface {
 	IsBookExists(ctx context.Context, name string) bool
 	AddBook(ctx context.Context, query *client.InsertBookQuery) (*client.Book, error)
+	FindBooks(ctx context.Context, filters map[string]string, offset, limit int) ([]*client.Book, error)
 }
 type Handler struct {
 	Logger      *logging.Logger
@@ -37,8 +39,40 @@ type Handler struct {
 
 func (h *Handler) Register(route *httprouter.Router) {
 	route.HandlerFunc(http.MethodPost, url_add_book, h.Logger.Middleware(errormiddleware.Middleware(h.AddBookHandler)))
+	route.HandlerFunc(http.MethodGet, url_get_book, h.Logger.Middleware(errormiddleware.Middleware(h.GetBooks)))
 }
+func (h *Handler) GetBooks(w http.ResponseWriter, r *http.Request) error {
+	filters := make(map[string]string, 0)
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil {
+		return errormiddleware.BadRequestError([]string{"bad query request", "offset must be present"}, err.Error())
+	}
+	if offset < 0 {
+		return errormiddleware.BadRequestError([]string{"bad query request"}, "offset must be greater than -1")
+	}
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		return errormiddleware.BadRequestError([]string{"bad query request", "offset must be present"}, err.Error())
+	}
+	if limit <= 0 {
+		return errormiddleware.BadRequestError([]string{"bad query request"}, "limit must be greater than 0")
+	}
+	AllowedParams := []string{}
 
+	for _, v := range AllowedParams {
+		if r.URL.Query().Has(v) {
+			filters[v] = r.URL.Query().Get(v)
+		}
+	}
+	books, err := h.BookService.FindBooks(r.Context(), filters, offset, limit)
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusOK)
+	bytes, _ := json.Marshal(books)
+	w.Write(bytes)
+	return nil
+}
 func (h *Handler) AddBookHandler(w http.ResponseWriter, r *http.Request) error {
 	r.ParseMultipartForm(10 << 20) //10 Mb
 	if h.BookService.IsBookExists(r.Context(), r.FormValue("name")) {

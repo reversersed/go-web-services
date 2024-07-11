@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	base "github.com/reversersed/go-web-services/tree/main/api_gateway/internal/client"
@@ -30,7 +31,26 @@ func NewService(baseURL, path string, logger *logging.Logger) *client {
 		},
 	}}
 }
+func (c *client) FindBooks(ctx context.Context, params url.Values) ([]*Book, error) {
+	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
+	AllowedParams := []string{"offset", "limit"}
+
+	filters := make(map[string][]string, 0)
+	for _, v := range AllowedParams {
+		if params.Has(v) {
+			filters[v] = []string{params.Get(v)}
+		}
+	}
+	bookBytes, err := c.SendGetGeneric(cntx, "", filters)
+	if err != nil {
+		return nil, err
+	}
+	var books []*Book
+	json.Unmarshal(bookBytes, &books)
+	return books, nil
+}
 func (c *client) AddBook(ctx context.Context, body io.Reader, contentType string) (*Book, error) {
 	uri, err := c.Base.BuildURL(c.Path, nil)
 	if err != nil {

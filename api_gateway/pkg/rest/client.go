@@ -33,7 +33,7 @@ func (c *RestClient) SendRequest(r *http.Request) (*CustomResponse, error) {
 		r.Header.Set("Content-Type", "application/json; charset=utf-8")
 	}
 
-	c.Logger.Infof("sending requiest to %s", r.URL)
+	c.Logger.Infof("sending request to %s", r.URL)
 	//reading userid from context and adding it to header
 	userId, valid := r.Context().Value(UserIdKey).(string)
 	if valid && len(userId) > 0 {

@@ -9,8 +9,8 @@ import (
 type Book struct {
 	Id     primitive.ObjectID `json:"id"`
 	Name   string             `json:"name"`
-	Author *author.Author     `json:"author,omitempty"`
-	Genres *[]genre.Genre     `json:"genres,omitempty"`
+	Author *author.Author     `json:"author"`
+	Genres *[]genre.Genre     `json:"genres"`
 	Pages  int                `json:"pages"`
 	Year   int                `json:"year"`
 	// Name of book file
