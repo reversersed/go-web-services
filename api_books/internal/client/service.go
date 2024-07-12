@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -41,7 +42,7 @@ func (s *service) GetBook(ctx context.Context, id string) (*Book, error) {
 	cntx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if byteBook, err := s.cache.Get([]byte(id)); err == nil {
+	if byteBook, err := s.cache.Get([]byte(fmt.Sprintf("book_%s", id))); err == nil {
 		var unBook Book
 		json.Unmarshal(byteBook, &unBook)
 		return &unBook, nil
@@ -64,9 +65,9 @@ func (s *service) GetBook(ctx context.Context, id string) (*Book, error) {
 	go s.findBookAuthor(cntx, book, &wg)
 
 	wg.Wait()
-	if _, err := s.cache.Get([]byte(book.Id.Hex())); err != nil {
+	if _, err := s.cache.Get([]byte(fmt.Sprintf("book_%s", book.Id.Hex()))); err != nil {
 		bytes, _ := json.Marshal(book)
-		s.cache.Set([]byte(book.Id.Hex()), bytes, int(24*time.Hour))
+		s.cache.Set([]byte(fmt.Sprintf("book_%s", book.Id.Hex())), bytes, int(24*time.Hour))
 	}
 	return book, nil
 }
@@ -113,7 +114,7 @@ func (s *service) AddBook(ctx context.Context, query *InsertBookQuery) (*Book, e
 	wg.Wait()
 
 	data, _ := json.Marshal(book)
-	s.cache.Set([]byte(book.Id.Hex()), data, int((time.Hour*6)/time.Second))
+	s.cache.Set([]byte(fmt.Sprintf("book_%s", book.Id.Hex())), data, int((time.Hour*6)/time.Second))
 	s.logger.Infof("created new book: %v", book)
 	return book, nil
 }
@@ -133,9 +134,9 @@ func (s *service) FindBooks(ctx context.Context, filters map[string]string, offs
 	}
 	wg.Wait()
 	for _, v := range books {
-		if _, err := s.cache.Get([]byte(v.Id.Hex())); err != nil {
+		if _, err := s.cache.Get([]byte(fmt.Sprintf("book_%s", v.Id.Hex()))); err != nil {
 			bytes, _ := json.Marshal(v)
-			s.cache.Set([]byte(v.Id.Hex()), bytes, int(24*time.Hour))
+			s.cache.Set([]byte(fmt.Sprintf("book_%s", v.Id.Hex())), bytes, int(24*time.Hour))
 		}
 	}
 	return books, nil
@@ -146,7 +147,7 @@ func (s *service) findBookGenres(ctx context.Context, book *Book, wg *sync.WaitG
 	paramRequest := make([]string, 0)
 	var genres []*Genre
 	for _, v := range book.GenresId {
-		genre, err := s.cache.Get([]byte(v.Hex()))
+		genre, err := s.cache.Get([]byte(fmt.Sprintf("genre_%s", v.Hex())))
 		if err != nil {
 			missed_genre = true
 		} else {
@@ -166,9 +167,9 @@ func (s *service) findBookGenres(ctx context.Context, book *Book, wg *sync.WaitG
 		genres = make([]*Genre, 0)
 		json.Unmarshal(genreBytes, &genres)
 		for _, v := range genres {
-			if _, ok := s.cache.Get([]byte(v.Id.Hex())); ok != nil {
+			if _, ok := s.cache.Get([]byte(fmt.Sprintf("genre_%s", v.Id.Hex()))); ok != nil {
 				bytes, _ := json.Marshal(v)
-				s.cache.Set([]byte(v.Id.Hex()), bytes, int(12*time.Hour))
+				s.cache.Set([]byte(fmt.Sprintf("genre_%s", v.Id.Hex())), bytes, int(12*time.Hour))
 			}
 		}
 	}
@@ -178,7 +179,7 @@ func (s *service) findBookGenres(ctx context.Context, book *Book, wg *sync.WaitG
 func (s *service) findBookAuthor(ctx context.Context, book *Book, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var author Author
-	bytes, err := s.cache.Get([]byte(book.AuthorId.Hex()))
+	bytes, err := s.cache.Get([]byte(fmt.Sprintf("author_%s", book.AuthorId.Hex())))
 	if err == nil {
 		json.Unmarshal(bytes, &author)
 		book.Author = &author
@@ -192,9 +193,8 @@ func (s *service) findBookAuthor(ctx context.Context, book *Book, wg *sync.WaitG
 		return
 	}
 	json.Unmarshal(authorBytes, &author)
-	if _, ok := s.cache.Get([]byte(book.Id.Hex())); ok != nil {
-		bytes, _ := json.Marshal(book)
-		s.cache.Set([]byte(book.Id.Hex()), bytes, int(12*time.Hour))
+	if _, ok := s.cache.Get([]byte(fmt.Sprintf("author_%s", author.Id.Hex()))); ok != nil {
+		s.cache.Set([]byte(fmt.Sprintf("author_%s", author.Id.Hex())), authorBytes, int(12*time.Hour))
 	}
 
 	book.Author = &author

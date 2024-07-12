@@ -108,7 +108,7 @@ func (d *db) GetByFilter(ctx context.Context, filter map[string]string, offset, 
 		return nil, err
 	}
 	if len(books) == 0 {
-		return nil, errormiddleware.NotFoundError([]string{"no books found"}, "document slice containes 0 items")
+		return nil, errormiddleware.NotFoundError([]string{"no books found"}, "document slice contains 0 items")
 	}
 	return books, nil
 }
