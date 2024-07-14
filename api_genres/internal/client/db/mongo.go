@@ -32,34 +32,38 @@ func (d *db) seedGenres() {
 	d.Lock()
 	defer d.Unlock()
 
+	genreCount, _ := d.collection.CountDocuments(context.Background(), bson.D{})
+	if genreCount > 0 {
+		d.logger.Infof("there is %d genres, seeding canceled", genreCount)
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	preinstalledGenres := []string{"Детектив", "Фентези", "Фантастика", "Комиксы", "Бизнес-менеджмент", "Хобби", "Детские книги", "История", "Легкое чтение", "Серьезное чтение"}
+	preinstalledGenres := []string{"Детектив", "Фантастика", "Комиксы", "Бизнес-менеджмент", "Хобби", "История", "Легкое чтение", "Серьезное чтение"}
 
 	d.logger.Infof("trying to seed %d genres...", len(preinstalledGenres))
 	for _, v := range preinstalledGenres {
-		result := d.collection.FindOne(ctx, bson.M{"name": v})
-		if err := result.Err(); errors.Is(err, mongo.ErrNoDocuments) {
-			d.logger.Infof("seeding genre %s...", v)
-			genre := &client.Genre{
-				Name: v,
-			}
-			response, err := d.collection.InsertOne(ctx, genre)
-			if err != nil {
-				d.logger.Fatalf("cannot seed genre: %v", err)
-			}
-			id, ok := response.InsertedID.(primitive.ObjectID)
-			if !ok {
-				d.logger.Fatalf("can't create id for genre")
-			}
-			d.logger.Infof("genre %s seeded with id %v", v, id.Hex())
-			continue
-		} else if err != nil {
-			d.logger.Fatalf("unexcepted error while genres seeding: %v", err)
+		d.logger.Infof("seeding genre %s...", v)
+		genre := &client.Genre{
+			Name: v,
 		}
-		d.logger.Infof("genre %s already exists. not seeding", v)
+		response, err := d.collection.InsertOne(ctx, genre)
+		if err != nil {
+			d.logger.Fatalf("cannot seed genre: %v", err)
+		}
+		id, ok := response.InsertedID.(primitive.ObjectID)
+		if !ok {
+			d.logger.Fatalf("can't create id for genre")
+		}
+		d.logger.Infof("genre %s seeded with id %v", v, id.Hex())
 	}
+	d.logger.Infof("seeding manual genres...")
+	hex, _ := primitive.ObjectIDFromHex("6690e6dcfd658345b06c2a25")
+	d.collection.InsertOne(ctx, &client.Genre{Id: hex, Name: "Детские книги"})
+	hex, _ = primitive.ObjectIDFromHex("6690e6dcfd658345b06c2a12")
+	d.collection.InsertOne(ctx, &client.Genre{Id: hex, Name: "Фентези"})
+	d.logger.Infof("genres seeded")
 }
 func (d *db) GetGenre(ctx context.Context, id []primitive.ObjectID) ([]*client.Genre, error) {
 	d.RLock()

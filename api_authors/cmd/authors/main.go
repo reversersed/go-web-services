@@ -43,7 +43,7 @@ func main() {
 	}
 
 	logger.Info("services initializing...")
-	bookStorage := db.NewStorage(db_client, "books", logger)
+	bookStorage := db.NewStorage(db_client, "authors", logger)
 	bookService := client.NewService(bookStorage, logger, cache, validator.New())
 
 	logger.Info("handlers registration...")
